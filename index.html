@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRONTO Specs</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --pronto: #2b6cb0;
+            --bg-app: #f1f5f9;
+            --text-main: #1e293b;
+            --white: #ffffff;
+            --border: #cbd5e1;
+            /* Стандартные цвета для Светлой темы и для Листа */
+            --sheet-bg: #ffffff;
+            --header-bg: #e0f2fe; /* Светло-голубой фон заголовков */
+            --header-text: #0369a1; /* Темно-синий текст заголовков */
+            --label-color: #64748b;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            transition: background 0.3s;
+            overflow-x: hidden;
+        }
+
+        #app {
+            max-width: 900px;
+            width: 96%;
+            margin: 20px auto;
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+
+        /* МОБИЛЬНАЯ АДАПТАЦИЯ */
+        @media screen and (max-width: 800px) {
+            #app { overflow-x: auto; padding: 10px; display: block; -webkit-overflow-scrolling: touch; }
+            .document-sheet, .home-card { min-width: 800px; margin: 0 auto; }
+            .footer-btns { width: 100vw !important; justify-content: flex-start !important; overflow-x: auto; padding: 10px !important; }
+            .footer-btns .btn { min-width: 120px; flex: 0 0 auto; }
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* КНОПКИ */
+        .btn { border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; color: white; background: var(--pronto); text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-secondary { background: #64748b; }
+        .btn-success { background: #10b981; }
+        .btn-warning { background: #d97706; }
+        .btn-danger { background: #ef4444; }
+        .admin-add-btn { background: #10b981; color: white; border: none; width: 28px; height: 28px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 5px; display: flex; align-items: center; justify-content: center; }
+
+        /* ИНТЕРФЕЙС (ГЛАВНАЯ) */
+        .home-card { background: var(--white); border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px; }
+        .main-title { color: var(--pronto); font-size: 34px; font-weight: 900; margin: 0; letter-spacing: -1px; }
+        .subtitle { color: #3b82f6; font-size: 26px; margin-bottom: 20px; display: block; }
+        .description-text { text-align: left; background: #f8fafc; padding: 25px; border-radius: 10px; margin: 25px 0; border-left: 5px solid var(--pronto); color: #475569; line-height: 1.6; font-size: 14px; }
+
+        /* АРХИВ */
+        .archive-item { background: white; border: 1px solid #cbd5e1; padding: 8px; margin-bottom: 15px; border-radius: 10px; display: flex; align-items: center; gap: 10px; height: 90px; overflow: hidden; }
+        .archive-thumb { width: 60px; height: 100%; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; flex-shrink: 0; }
+        .archive-info { flex-grow: 1; text-align: left; font-size: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+        .archive-info b { font-size: 14px; color: var(--pronto); margin-bottom: 3px; display: block; }
+        .archive-info small { color: #64748b; line-height: 1.2; }
+        
+        .archive-controls { display: flex; gap: 5px; height: 100%; flex-shrink: 0; }
+        .btn-tall { width: 45px; height: 100%; border: none; border-radius: 6px; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-act-red { background-color: #ef4444 !important; color: white !important; }
+        .btn-act-green { background-color: #10b981 !important; color: white !important; }
+        .btn-stack { display: flex; flex-direction: column; gap: 3px; width: 40px; height: 100%; }
+        .btn-mini { flex: 1; border: none; border-radius: 4px; background: #475569; color: white; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* --- ДОКУМЕНТ (ВСЕГДА БЕЛЫЙ) --- */
+        /* Даже в темной теме лист остается светлым, как бумага */
+        .document-sheet { 
+            background-color: white !important; 
+            color: #1e293b !important; 
+            padding: 40px; 
+            border-radius: 2px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.1); 
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid var(--pronto); padding-bottom: 15px; margin-bottom: 20px; }
+        .tz-number-input { font-size: 32px; font-weight: 900; color: var(--pronto) !important; border: none; width: 220px; background: transparent; outline: none; }
+        
+        /* Верхний блок с инфо */
+        .top-info-grid { 
+            display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 10px; margin-bottom: 20px; 
+            background: #f1f5f9 !important; /* Всегда светло-серый */
+            padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; 
+            color: black !important;
+        }
+        .top-info-grid label { display: block; font-size: 10px; font-weight: 800; color: #64748b !important; margin-bottom: 3px; }
+
+        /* Таблица */
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        .spec-table th { background: #1e293b !important; color: white !important; padding: 8px; text-align: left; }
+        .spec-table td { border: 1px solid #cbd5e1; padding: 6px 8px; vertical-align: middle; color: black !important; }
+        
+        /* ЗАГОЛОВКИ РАЗДЕЛОВ (Тот самый цвет, который пропадал) */
+        .section-title td { 
+            background: #e0f2fe !important; /* Всегда светло-голубой */
+            font-weight: 800; 
+            color: #0369a1 !important; /* Всегда темно-синий */
+            padding: 8px; text-transform: uppercase; font-size: 11px; 
+        }
+
+        /* Поля ввода (всегда белые) */
+        select, input, textarea { 
+            width: 100%; padding: 6px; 
+            border: 1px solid #cbd5e1 !important; 
+            border-radius: 4px; font-size: 13px; 
+            background: #ffffff !important; /* Всегда белый фон */
+            color: #000000 !important;      /* Всегда черный текст */
+            box-sizing: border-box; min-width: 50px; 
+        }
+        
+        .compact-row { display: flex; align-items: center; gap: 5px; width: 100%; }
+        .compact-row select { flex-grow: 1; min-width: 100px; }
+        .compact-row input { width: 45px !important; text-align: center; font-weight: bold; }
+        .compact-sep { margin: 0 2px; color: #cbd5e1; font-weight: bold; }
+        
+        .unit-box { display: flex; align-items: center; gap: 5px; }
+        .unit-box span { font-size: 11px; font-weight: bold; color: #64748b !important; white-space: nowrap; }
+        .comment-row input { border: none !important; border-bottom: 1px dashed #cbd5e0 !important; background: transparent !important; font-style: italic; color: var(--pronto) !important; }
+
+        .split-field { display: flex; gap: 15px; height: 200px; margin-top: 15px; }
+        .split-left { flex: 1; display: flex; flex-direction: column; }
+        .split-left textarea { flex: 1; width: 100%; resize: none; font-family: inherit; }
+        .split-right { width: 250px; flex-shrink: 0; border: 2px dashed #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #f8fafc !important; cursor: pointer; position: relative; overflow: hidden; }
+        #preview_img { width: 100%; height: 100%; object-fit: contain; display: none; }
+
+        .signature-block { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 2px solid #1e293b; }
+        .sig-item { width: 45%; text-align: center; } 
+        .sig-title { font-size: 11px; font-weight: 800; color: #64748b !important; text-transform: uppercase; margin-bottom: 35px; display: block; }
+        .sig-line { border-bottom: 1px solid #1e293b; width: 100%; height: 1px; }
+
+        .footer-btns { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); padding: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); display: flex; gap: 10px; justify-content: center; z-index: 100; border-top: 1px solid #e2e8f0; }
+        .footer-btns .btn { margin: 0; flex: 0 1 180px; font-size: 12px; padding: 12px; }
+
+        .modal { position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 300px; text-align: center; }
+
+        /* === ТЕМНАЯ ТЕМА (ВЛИЯЕТ ТОЛЬКО НА МЕНЮ И ФОН) === */
+        /* Сам лист ТЗ игнорирует темную тему и остается светлым */
+        body.dark-theme { background-color: #0f172a; color: #f1f5f9; }
+        body.dark-theme .home-card { background-color: #1e293b; color: white; }
+        body.dark-theme .description-text { background-color: #0f172a; color: #cbd5e1; border-left-color: #3b82f6; }
+        
+        body.dark-theme .archive-item { background-color: #1e293b; border-color: #334155; }
+        body.dark-theme .archive-info b { color: #63b3ed; }
+        
+        body.dark-theme .footer-btns { background-color: #1e293b; border-color: #334155; }
+        body.dark-theme .modal-content { background-color: #1e293b; color: white; }
+        /* Инпуты в настройках */
+        body.dark-theme .home-card select, 
+        body.dark-theme .modal-content input { 
+            background-color: #0f172a !important; color: white !important; border-color: #334155 !important; 
+        }
+
+        /* === ПЕЧАТЬ (FIXED) === */
+        @media print {
+            .no-print, .footer-btns, .admin-add-btn { display: none !important; }
+            html, body { height: auto !important; overflow: visible !important; background: white !important; color: black !important; }
+            #app { margin: 0 !important; padding: 0 !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; }
+            
+            .document-sheet { 
+                padding: 0 !important; margin: 0 !important;
+                box-shadow: none !important; border: none !important; 
+                background-color: white !important; color: black !important;
+            }
+            
+            /* Принудительно черный для принтера */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            select, input, textarea, .tz-number-input { 
+                appearance: none; border: none !important; background: transparent !important; 
+                padding: 0; font-weight: bold; color: black !important; 
+            }
+            
+            .spec-table th { background-color: #333 !important; color: white !important; }
+            .section-title td { background-color: #eee !important; color: black !important; border: 1px solid black !important; }
+            .spec-table td { border-color: black !important; color: black !important; }
+            
+            .split-field { display: block !important; height: auto !important; page-break-inside: avoid; }
+            .split-left { width: 100% !important; height: auto !important; margin-bottom: 10px; }
+            .split-left textarea { width: 100%; border-bottom: 1px solid black !important; }
+            .split-right { width: 100% !important; height: auto !important; border: none !important; margin-top: 10px; min-height: 0; }
+            #preview_img { width: 100%; height: auto; max-height: 400px; object-fit: contain; }
+            
+            .signature-block { border-top-color: black !important; margin-top: 20px; page-break-inside: avoid; }
+            .sig-line { border-bottom-color: black !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="config.js"></script>
+    <script src="router.js"></script>
+</body>
+</html>
