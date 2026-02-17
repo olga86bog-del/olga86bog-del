@@ -3,61 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PRONTO Specs</title>
+    <title>PRONTO Specs | Cloud System</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        * { box-sizing: border-box; }
         :root {
             --pronto: #2b6cb0; --bg-app: #f1f5f9; --text-main: #1e293b; --white: #ffffff;
-            --sheet-bg: #ffffff; --header-bg: #e0f2fe; --header-text: #0369a1;
+            --border: #cbd5e1; --sheet-bg: #ffffff; --header-bg: #e0f2fe;
         }
 
-        body { margin: 0; font-family: -apple-system, sans-serif; background-color: var(--bg-app); overflow-x: hidden; }
-        #app { max-width: 900px; width: 96%; margin: 20px auto; padding-bottom: 100px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* ИСПРАВЛЕННЫЙ ЛИСТ (Больше не вылезает) */
-        .document-sheet { 
-            background-color: white !important; 
-            padding: 30px; 
-            border-radius: 4px; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.1); 
-            width: 100%;
-            overflow: hidden; /* Чтобы ничего не вылезало */
+        body { 
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-app); color: var(--text-main); transition: background 0.3s; 
+            overflow-x: hidden; 
         }
 
-        .spec-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-        .spec-table td { border: 1px solid #cbd5e1; padding: 5px; word-wrap: break-word; color: black !important; }
-        .section-title td { background: #e0f2fe !important; font-weight: bold; color: #0369a1 !important; text-transform: uppercase; }
+        #app { max-width: 900px; width: 96%; margin: 20px auto; min-height: 100vh; padding-bottom: 120px; }
 
-        /* КНОПКИ СТРОГО ВНИЗУ */
-        .footer-btns { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: white; padding: 10px; display: flex; 
-            gap: 10px; justify-content: center; z-index: 1000;
-            border-top: 1px solid #ddd;
-        }
-        
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
+        /* ЛОАДЕР */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.5s; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .top-info-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 6px; }
-        .unit-box { display: flex; align-items: center; gap: 4px; }
-        .unit-box input { width: 60px !important; }
+        /* ЛИСТ ТЗ */
+        .document-sheet { 
+            background-color: white !important; padding: 40px; border-radius: 2px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.1); position: relative; margin-top: 20px;
+            width: 100%; min-height: 1120px; /* Формат А4 */
+        }
+
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; table-layout: fixed; }
+        .spec-table td { border: 1px solid #cbd5e1; padding: 6px 8px; color: black !important; vertical-align: middle; word-wrap: break-word; }
+        .section-title td { background: #e0f2fe !important; font-weight: 800; color: #0369a1 !important; text-transform: uppercase; font-size: 11px; }
+
+        .footer-btns { 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); 
+            padding: 15px; display: flex; gap: 10px; justify-content: center; z-index: 1000; border-top: 1px solid #e2e8f0; 
+        }
+
+        .btn { border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-success { background: #10b981; }
+        .btn-secondary { background: #64748b; }
+
+        .modal { position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 320px; text-align: center; }
+
+        @media screen and (max-width: 800px) {
+            #app { padding: 10px; }
+            .document-sheet { padding: 20px; min-width: 760px; }
+        }
     </style>
 </head>
 <body>
-    <div id="loader"><div class="spinner"></div></div>
+    <div id="loader"><div class="spinner"></div><p style="margin-top:15px; color:var(--pronto); font-weight:bold;">PRONTO SPECS 2.0</p></div>
     <div id="app"></div>
     <script src="config.js"></script>
     <script src="router.js"></script>
 </body>
 </html>
+
 
 
 
