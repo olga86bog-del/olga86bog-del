@@ -1,33 +1,21 @@
-// --- ЗАПУСК: ЗАГРУЗКА ИЗ ОБЛАКА ---
+// --- ЗАГРУЗКА ---
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Стучимся в базу данных...");
-    
     db.ref('settings').once('value')
         .then((snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                console.log("✅ Настройки загружены!");
-                APP_CONFIG = data; 
-            } else {
-                console.log("⚠️ База пустая. Сохраняю начальные данные...");
-                db.ref('settings').set(APP_CONFIG);
-            }
+            if (snapshot.val()) APP_CONFIG = snapshot.val();
+            else db.ref('settings').set(APP_CONFIG);
             startApp();
         })
-        .catch((error) => {
-            console.error("Ошибка базы:", error);
-            startApp(); 
+        .catch((e) => {
+            console.error("Ошибка базы:", e);
+            startApp();
         });
 });
 
 function startApp() {
     const loader = document.getElementById('loader');
-    if(loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.style.display = 'none', 500);
-    }
-    applyTheme();
-    navigate('home');
+    if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
+    applyTheme(); navigate('home');
 }
 
 let currentEditIndex = null;
@@ -42,130 +30,79 @@ function applyTheme() {
     document.body.className = s.theme === 'dark' ? 'dark-theme' : '';
 }
 
-function getList(key) { return APP_CONFIG[key] || []; }
-
-// --- УПРАВЛЕНИЕ СПИСКАМИ ---
-function openManageMenu(key, selectId) {
-    if (getSettings().role !== 'admin') return;
-    currentManageKey = key;
-    renderManageList();
-    document.getElementById('manageModal').style.display = 'flex';
-}
-
-function renderManageList() {
-    const modalSelect = document.getElementById('manageListSelect');
-    if(!modalSelect) return;
-    modalSelect.innerHTML = '';
-    getList(currentManageKey).forEach(item => modalSelect.add(new Option(item, item)));
-}
-
 function syncToCloud() {
-    db.ref('settings').set(APP_CONFIG)
-        .then(() => console.log("💾 Сохранено в Облако!"))
-        .catch((err) => console.error("Ошибка записи:", err));
+    db.ref('settings').set(APP_CONFIG).then(() => console.log("💾 Облако обновлено"));
 }
 
-function manAdd() {
-    const val = prompt("Добавить новый пункт:");
-    if (val && val.trim()) {
-        APP_CONFIG[currentManageKey].push(val.trim());
-        refreshAfterChange();
-    }
-}
-
-function manEdit() {
-    const modalSelect = document.getElementById('manageListSelect');
-    const oldVal = modalSelect.value;
-    if (!oldVal) return;
-    const newVal = prompt("Изменить:", oldVal);
-    if (newVal && newVal.trim() && newVal !== oldVal) {
-        const idx = APP_CONFIG[currentManageKey].indexOf(oldVal);
-        if (idx !== -1) {
-            APP_CONFIG[currentManageKey][idx] = newVal.trim();
-            refreshAfterChange();
-        }
-    }
-}
-
-function manDel() {
-    const modalSelect = document.getElementById('manageListSelect');
-    const val = modalSelect.value;
-    if (!val) return;
-    if (confirm(`Удалить "${val}"?`)) {
-        const idx = APP_CONFIG[currentManageKey].indexOf(val);
-        if (idx !== -1) {
-            APP_CONFIG[currentManageKey].splice(idx, 1);
-            refreshAfterChange();
-        }
-    }
-}
-
-function refreshAfterChange() {
-    renderManageList();
-    if(document.getElementById('equipment_select')) populateSelects();
-    syncToCloud();
-}
-
-function renderSelect(id, configKey) {
-    const isAdmin = getSettings().role === 'admin';
-    const btnHTML = isAdmin ? `<button onclick="openManageMenu('${configKey}', '${id}')" class="admin-add-btn no-print">+</button>` : '';
-    return `<div style="display:flex; align-items:center; width:100%; gap:5px;"><select id="${id}" style="flex-grow:1;"></select>${btnHTML}</div>`;
-}
-
-// --- ИНТЕРФЕЙС ---
-const modalsHTML = `
-<div id="loginModal" class="modal" style="display:none"><div class="modal-content"><h3>Вход Админа</h3><input type="password" id="inputPassword" placeholder="Пароль" style="width:100%; margin-bottom:15px; padding:10px;"><button onclick="checkLogin()" class="btn">Войти</button><button onclick="closeModals()" class="btn btn-secondary">Отмена</button></div></div>
-<div id="manageModal" class="modal" style="display:none"><div class="modal-content"><h3>Управление</h3><select id="manageListSelect" style="width:100%; padding:10px; margin-bottom:15px;"></select><button onclick="manAdd()" class="btn btn-success">➕ Добавить</button><button onclick="manEdit()" class="btn btn-warning">✏️ Изменить</button><button onclick="manDel()" class="btn btn-danger">🗑️ Удалить</button><button onclick="closeModals()" class="btn btn-secondary">Закрыть</button></div></div>
-`;
-
+// --- НАВИГАЦИЯ ---
 function navigate(v) {
     const app = document.getElementById('app');
-    if(!app) return;
-    if(v==='home') app.innerHTML = homeView();
-    else if(v==='settings') app.innerHTML = settingsView();
-    else if(v==='template') app.innerHTML = templateView();
-    if(v==='template') populateSelects();
+    if(v === 'home') app.innerHTML = homeView();
+    else if(v === 'settings') app.innerHTML = settingsView();
+    else if(v === 'template') app.innerHTML = templateView();
+    if(v === 'template') { populateSelects(); checkDualTemp(); }
+    window.scrollTo(0,0);
 }
 
 const homeView = () => {
-    const s = getSettings();
     const arc = getArchive();
-    return `<div class="home-card"><h1>PRONTO</h1><div style="font-size:10px; margin-bottom:20px;">РЕЖИМ: ${s.role.toUpperCase()}</div><button onclick="navigate('template')" class="btn" style="height:60px;">+ СОЗДАТЬ ТЗ</button><button onclick="navigate('settings')" class="btn btn-secondary">НАСТРОЙКИ</button><div style="margin-top:30px; text-align:left;"><h4>АРХИВ</h4>${arc.length ? arc.map((item, i) => `<div class="archive-item"><b>№ ${item.tz_no}</b> - ${item.eq} <button onclick="deleteFromArchive(${i})" style="float:right">🗑️</button></div>`).join('') : '<p>Пусто</p>'}</div></div>`;
+    return `
+    <div class="home-card">
+        <h1 class="main-title">PRODUCTION</h1><div class="subtitle">SPECS</div>
+        <button onclick="createNewTZ()" class="btn">+ СОЗДАТЬ НОВОЕ ТЗ</button>
+        <button onclick="navigate('settings')" class="btn btn-secondary">НАСТРОЙКИ</button>
+        <div style="margin-top:30px; text-align:left;">
+            <h4>АРХИВ ПРОЕКТОВ</h4>
+            ${arc.length ? arc.map((item, i) => `
+                <div class="archive-item">
+                    <div><b>№ ${item.tz_no}</b><br><small>${item.eq}</small></div>
+                    <button onclick="deleteFromArchive(${i})" class="btn" style="width:40px; background:red; margin:0;">🗑️</button>
+                </div>`).join('') : '<p>Архив пуст</p>'}
+        </div>
+    </div>`;
 };
 
-const settingsView = () => {
-    const s = getSettings();
-    return `<div class="home-card"><h2>НАСТРОЙКИ</h2><label>Роль:</label><select id="role_select" onchange="handleRole(this)"><option value="participant" ${s.role!=='admin'?'selected':''}>Участник</option><option value="admin" ${s.role==='admin'?'selected':''}>Администратор</option></select><button onclick="saveSettings()" class="btn" style="margin-top:20px;">СОХРАНИТЬ</button><button onclick="navigate('home')" class="btn btn-secondary">НАЗАД</button>${modalsHTML}</div>`;
-};
+const settingsView = () => `
+    <div class="home-card">
+        <h2>НАСТРОЙКИ</h2>
+        <button onclick="navigate('home')" class="btn btn-secondary">← НАЗАД</button>
+    </div>`;
 
-const templateView = () => `<div class="document-sheet"><h2>ТЗ № <input type="text" id="tz_no" style="width:80px"></h2><label>Оборудование:</label>${renderSelect('equipment_select', 'equipment')}<br><label>Материал:</label>${renderSelect('mat', 'materials')}<br><div class="footer-btns"><button class="btn btn-success" onclick="saveToArchive()">💾 СОХРАНИТЬ</button><button class="btn btn-secondary" onclick="navigate('home')">ОТМЕНА</button></div>${modalsHTML}</div>`;
+const templateView = () => `
+    <div class="document-sheet">
+        <div style="display:flex; justify-content:space-between;">
+            <h2>ТЗ № <input type="text" id="tz_no" style="width:100px;"></h2>
+            <button onclick="navigate('home')" style="border:none; background:none; font-size:24px; cursor:pointer;">✕</button>
+        </div>
+        <table class="spec-table">
+            <tr class="section-title"><td colspan="2">1. ГАБАРИТЫ</td></tr>
+            <tr><td>Оборудование</td><td>${renderSelect('equipment_select', 'equipment')}</td></tr>
+            <tr><td>Высота (H)</td><td><input type="number" id="h" value="850"> мм</td></tr>
+            <tr><td>Ширина (W)</td><td><input type="number" id="w" value="1200"> мм</td></tr>
+            <tr><td>Глубина (D)</td><td><input type="number" id="d" value="700"> мм</td></tr>
+            <tr class="section-title"><td colspan="2">2. ХАРАКТЕРИСТИКИ</td></tr>
+            <tr><td>Материал</td><td>${renderSelect('mat', 'materials')}</td></tr>
+            <tr><td>Охлаждение</td><td>${renderSelect('cool', 'coolingMethods')}</td></tr>
+        </table>
+        <div class="footer-btns">
+            <button class="btn btn-success" onclick="saveToArchive()">💾 СОХРАНИТЬ</button>
+            <button class="btn" onclick="window.print()">🖨️ ПЕЧАТЬ</button>
+        </div>
+    </div>`;
 
-function populateSelects() {
-    const eqs = document.getElementById('equipment_select');
-    if(eqs) { eqs.innerHTML = ''; APP_CONFIG.equipment.forEach(v => eqs.add(new Option(v,v))); }
-    const mats = document.getElementById('mat');
-    if(mats) { mats.innerHTML = ''; APP_CONFIG.materials.forEach(v => mats.add(new Option(v,v))); }
+function renderSelect(id, key) {
+    return `<select id="${id}">${APP_CONFIG[key].map(v => `<option value="${v}">${v}</option>`).join('')}</select>`;
 }
 
-function handleRole(el) { if(el.value==='admin') document.getElementById('loginModal').style.display='flex'; }
-function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
-
-function checkLogin() {
-    if(document.getElementById('inputPassword').value === APP_CONFIG.adminPassword) {
-        localStorage.setItem('pronto_settings', JSON.stringify({role:'admin', theme:'light'}));
-        alert('Успех!'); navigate('settings');
-    } else alert('Неверно');
-}
-
-function saveSettings() {
-    const role = localStorage.getItem('pronto_settings') ? JSON.parse(localStorage.getItem('pronto_settings')).role : 'participant';
-    localStorage.setItem('pronto_settings', JSON.stringify({role: role, theme: 'light'}));
-    navigate('home');
-}
+function populateSelects() {}
+function checkDualTemp() {}
 
 function saveToArchive() {
     const arc = getArchive();
-    arc.unshift({ tz_no: document.getElementById('tz_no').value || '?', eq: document.getElementById('equipment_select').value });
+    arc.unshift({ 
+        tz_no: document.getElementById('tz_no').value || '?', 
+        eq: document.getElementById('equipment_select').value 
+    });
     localStorage.setItem('pronto_archive', JSON.stringify(arc));
     navigate('home');
 }
@@ -176,3 +113,5 @@ function deleteFromArchive(i) {
     navigate('home');
 }
 
+function createNewTZ() { uploadedImageBase64=null; navigate('template'); }
+function applyTheme() {}
