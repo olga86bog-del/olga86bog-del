@@ -7,7 +7,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -17,57 +16,66 @@
             --border: #cbd5e1; --sheet-bg: #ffffff; --header-bg: #e0f2fe;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* ТЕМНАЯ ТЕМА */
+        body.dark-theme {
+            --bg-app: #0f172a; --text-main: #f1f5f9; --white: #1e293b; --border: #334155;
+            --sheet-bg: #1e293b; --header-bg: #334155;
+        }
+
+        * { box-sizing: border-box; }
 
         body { 
-            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg-app); color: var(--text-main); transition: background 0.3s; 
-            overflow-x: hidden; 
+            margin: 0; font-family: -apple-system, sans-serif; 
+            background-color: var(--bg-app); color: var(--text-main); 
+            transition: all 0.3s ease; overflow-x: hidden; 
         }
 
-        #app { max-width: 900px; width: 96%; margin: 20px auto; min-height: 100vh; padding-bottom: 120px; }
+        #app { max-width: 950px; width: 96%; margin: 20px auto; padding-bottom: 120px; }
 
-        /* ЛОАДЕР */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.5s; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* ЛИСТ ТЗ */
+        /* ЛИСТ ТЗ - Теперь он не вылазит */
         .document-sheet { 
-            background-color: white !important; padding: 40px; border-radius: 2px; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.1); position: relative; margin-top: 20px;
-            width: 100%; min-height: 1120px; /* Формат А4 */
+            background-color: white !important; padding: 40px; border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.2); position: relative; width: 100%;
+            color: black !important; /* На листе всегда черный текст */
         }
 
-        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; table-layout: fixed; }
-        .spec-table td { border: 1px solid #cbd5e1; padding: 6px 8px; color: black !important; vertical-align: middle; word-wrap: break-word; }
-        .section-title td { background: #e0f2fe !important; font-weight: 800; color: #0369a1 !important; text-transform: uppercase; font-size: 11px; }
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--pronto); padding-bottom: 15px; margin-bottom: 20px; }
+        
+        /* СЕТКА ВЕРХНИХ ПОЛЕЙ (Оборудование, Ед, Кол-во) */
+        .top-info-grid { 
+            display: grid; grid-template-columns: 2fr 0.8fr 0.8fr; gap: 15px; 
+            margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;
+        }
+
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+        .spec-table td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: middle; word-wrap: break-word; }
+        .section-title td { background: #e0f2fe !important; font-weight: bold; color: #0369a1 !important; text-transform: uppercase; }
 
         .footer-btns { 
-            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); 
-            padding: 15px; display: flex; gap: 10px; justify-content: center; z-index: 1000; border-top: 1px solid #e2e8f0; 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); 
+            padding: 15px; display: flex; gap: 12px; justify-content: center; 
+            z-index: 1000; border-top: 1px solid var(--border); 
         }
 
-        .btn { border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { border: none; padding: 14px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; }
         .btn-success { background: #10b981; }
         .btn-secondary { background: #64748b; }
+        .close-x { font-size: 30px; cursor: pointer; color: #cbd5e0; background: none; border: none; }
+        .close-x:hover { color: #ef4444; }
 
-        .modal { position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 320px; text-align: center; }
-
-        @media screen and (max-width: 800px) {
-            #app { padding: 10px; }
-            .document-sheet { padding: 20px; min-width: 760px; }
-        }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="loader"><div class="spinner"></div><p style="margin-top:15px; color:var(--pronto); font-weight:bold;">PRONTO SPECS 2.0</p></div>
+    <div id="loader"><div class="spinner"></div><p style="margin-top:15px; font-weight:bold; color:var(--pronto);">PRONTO CLOUD 2.0</p></div>
     <div id="app"></div>
     <script src="config.js"></script>
     <script src="router.js"></script>
 </body>
 </html>
+
 
 
 
