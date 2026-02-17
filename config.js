@@ -8,19 +8,20 @@ const firebaseConfig = {
   appId: "1:552560993208:web:41ca99e7fe46864502a54d"
 };
 
-// Проверка подключения
 try {
     firebase.initializeApp(firebaseConfig);
-    console.log("✅ Firebase готов!");
+    console.log("✅ Firebase подключен!");
 } catch (e) {
-    console.error("❌ Ошибка конфига:", e);
+    console.error("❌ Ошибка Firebase:", e);
 }
 
 const db = firebase.database();
 
 let APP_CONFIG = {
+    adminLogin: "admin",
     adminPassword: "123",
     equipment: ["Стол холодильный", "Стол морозильный", "Стол комбинированный", "Стол барный", "Ларь морозильный", "Горка", "Витрина открытая", "Витрина закрытая с дверьми", "Стол с настольной саладеттой", "Витрина с встроенной саладеттой"],
+    units: ["шт.", "компл."],
     materials: ["AISI 304", "AISI 430", "Окрашенная сталь"],
     constructions: ["Вертикальный", "Горизонтальный", "Другое"],
     coolingMethods: ["Статический", "Динамический", "Комбинированный"],
@@ -36,3 +37,4 @@ let APP_CONFIG = {
     wheels: ["d-200", "d-150", "d-125", "d-100", "d-75", "d-50", "Без колес"],
     ventilation: ["Замкнутая", "Сквозная"]
 };
+
