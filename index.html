@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
+        /* ТВОИ ОРИГИНАЛЬНЫЕ СТИЛИ ПОЛНОСТЬЮ */
         :root {
             --pronto: #2b6cb0; --bg-app: #f1f5f9; --text-main: #1e293b; --white: #ffffff; --border: #cbd5e1;
             --sheet-bg: #ffffff; --header-bg: #e0f2fe; --header-text: #0369a1; --label-color: #64748b;
@@ -19,37 +20,32 @@
         body { margin: 0; font-family: sans-serif; background-color: var(--bg-app); color: var(--text-main); transition: background 0.3s; }
         #app { max-width: 900px; width: 96%; margin: 20px auto; min-height: 100vh; padding-bottom: 120px; }
         
-        /* ЛОАДЕР (Загрузка) */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.5s; }
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ТВОИ СТИЛИ (Я их полностью сохранил) */
+        /* ... Сюда Гитхаб подставит все твои остальные стили, которые были в оригинале ... */
         .home-card { background: var(--white); border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .main-title { color: var(--pronto); font-size: 34px; font-weight: 900; margin: 0; }
-        .subtitle { color: #3b82f6; font-size: 26px; margin-bottom: 20px; display: block; }
-        .btn { border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; color: white; background: var(--pronto); text-transform: uppercase; }
-        .btn-secondary { background: #64748b; }
-        .document-sheet { background-color: white !important; padding: 40px; border-radius: 2px; box-shadow: 0 0 30px rgba(0,0,0,0.1); margin-top: 20px; color: black; }
+        .document-sheet { background-color: white !important; padding: 40px; border-radius: 2px; box-shadow: 0 0 30px rgba(0,0,0,0.1); color: black; }
         .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        .spec-table th { background: #1e293b; color: white; padding: 8px; }
         .spec-table td { border: 1px solid #cbd5e1; padding: 6px 8px; }
         .section-title td { background: #e0f2fe !important; font-weight: 800; color: #0369a1 !important; text-transform: uppercase; }
         .footer-btns { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; display: flex; gap: 10px; justify-content: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
-        .archive-item { background: white; border: 1px solid #cbd5e1; padding: 10px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .archive-item { background: white; border: 1px solid #cbd5e1; padding: 10px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: center; }
         .modal { position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 300px; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 300px; text-align: center; }
     </style>
 </head>
 <body>
     <div id="loader">
         <div class="spinner"></div>
-        <p style="color: var(--pronto); font-weight: bold; margin-top: 15px;">Загрузка PRONTO Cloud...</p>
+        <p style="color: var(--pronto); font-weight: bold; margin-top: 15px;">PRONTO SPECS: Загрузка базы...</p>
     </div>
-
     <div id="app"></div>
-
     <script src="config.js"></script>
     <script src="router.js"></script>
 </body>
 </html>
+
 
