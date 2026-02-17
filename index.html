@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PRONTO Specs | Cloud System</title>
+    <title>PRONTO Specs | Professional Cloud System</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -16,65 +16,80 @@
             --border: #cbd5e1; --sheet-bg: #ffffff; --header-bg: #e0f2fe;
         }
 
-        /* ТЕМНАЯ ТЕМА */
+        /* ПЕРЕМЕННЫЕ ДЛЯ ТЕМНОЙ ТЕМЫ */
         body.dark-theme {
             --bg-app: #0f172a; --text-main: #f1f5f9; --white: #1e293b; --border: #334155;
             --sheet-bg: #1e293b; --header-bg: #334155;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body { 
-            margin: 0; font-family: -apple-system, sans-serif; 
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background-color: var(--bg-app); color: var(--text-main); 
             transition: all 0.3s ease; overflow-x: hidden; 
         }
 
-        #app { max-width: 950px; width: 96%; margin: 20px auto; padding-bottom: 120px; }
+        #app { max-width: 950px; width: 96%; margin: 20px auto; min-height: 100vh; padding-bottom: 120px; }
 
-        /* ЛИСТ ТЗ - Теперь он не вылазит */
-        .document-sheet { 
-            background-color: white !important; padding: 40px; border-radius: 4px; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.2); position: relative; width: 100%;
-            color: black !important; /* На листе всегда черный текст */
-        }
-
-        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--pronto); padding-bottom: 15px; margin-bottom: 20px; }
-        
-        /* СЕТКА ВЕРХНИХ ПОЛЕЙ (Оборудование, Ед, Кол-во) */
-        .top-info-grid { 
-            display: grid; grid-template-columns: 2fr 0.8fr 0.8fr; gap: 15px; 
-            margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;
-        }
-
-        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-        .spec-table td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: middle; word-wrap: break-word; }
-        .section-title td { background: #e0f2fe !important; font-weight: bold; color: #0369a1 !important; text-transform: uppercase; }
-
-        .footer-btns { 
-            position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); 
-            padding: 15px; display: flex; gap: 12px; justify-content: center; 
-            z-index: 1000; border-top: 1px solid var(--border); 
-        }
-
-        .btn { border: none; padding: 14px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; }
-        .btn-success { background: #10b981; }
-        .btn-secondary { background: #64748b; }
-        .close-x { font-size: 30px; cursor: pointer; color: #cbd5e0; background: none; border: none; }
-        .close-x:hover { color: #ef4444; }
-
+        /* ЛОАДЕР */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* КОНТЕЙНЕР ЛИСТА ТЗ */
+        .document-sheet { 
+            background-color: white !important; padding: 40px; border-radius: 4px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.15); position: relative; width: 100%;
+            color: black !important; /* Текст на самом листе всегда черный для печати */
+        }
+
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--pronto); padding-bottom: 15px; margin-bottom: 25px; }
+        
+        /* ГРИД ДЛЯ ВЕРХНЕЙ СТРОКИ: Оборудование | Ед | Кол-во */
+        .top-info-grid { 
+            display: grid; grid-template-columns: 2fr 0.7fr 0.7fr; gap: 15px; 
+            margin-bottom: 25px; background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0;
+        }
+
+        [Image of the box model in CSS]
+
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+        .spec-table th { background: #1e293b !important; color: white !important; padding: 10px; text-align: left; }
+        .spec-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: middle; word-wrap: break-word; color: black !important; }
+        .section-title td { background: #e0f2fe !important; font-weight: 800; color: #0369a1 !important; text-transform: uppercase; font-size: 11px; }
+
+        .footer-btns { 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); 
+            padding: 20px; display: flex; gap: 15px; justify-content: center; 
+            z-index: 1000; border-top: 1px solid var(--border); 
+        }
+
+        .btn { border: none; padding: 15px 30px; border-radius: 10px; font-weight: 700; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.96); }
+        .btn-success { background: #10b981; }
+        .btn-secondary { background: #64748b; }
+        
+        .close-x { font-size: 32px; cursor: pointer; color: #cbd5e0; background: none; border: none; padding: 0 10px; transition: 0.2s; }
+        .close-x:hover { color: #ef4444; }
+
+        .modal { position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 350px; text-align: center; color: #1e293b; }
+
+        @media screen and (max-width: 800px) {
+            .document-sheet { padding: 20px; min-width: 850px; }
+            #app { overflow-x: auto; }
+        }
     </style>
 </head>
 <body>
-    <div id="loader"><div class="spinner"></div><p style="margin-top:15px; font-weight:bold; color:var(--pronto);">PRONTO CLOUD 2.0</p></div>
+    <div id="loader"><div class="spinner"></div><p style="margin-top:20px; font-weight:900; color:var(--pronto); letter-spacing: 2px;">PRONTO SPECS CLOUD</p></div>
     <div id="app"></div>
     <script src="config.js"></script>
     <script src="router.js"></script>
 </body>
 </html>
+
 
 
 
