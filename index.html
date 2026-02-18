@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PRONTO SPECS</title>
+    <title>PRODUCTION SPECS</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -13,71 +13,90 @@
     <style>
         :root { --pronto: #2b6cb0; --bg: #f1f5f9; --text: #1e293b; --white: #ffffff; --border: #cbd5e1; }
         body.dark-theme { --bg: #0f172a; --text: #f1f5f9; --white: #1e293b; --border: #334155; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        #app { max-width: 950px; width: 96%; margin: 20px auto; min-height: 100vh; padding-bottom: 120px; }
-
-        /* ЛОАДЕР */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 99999; }
-        .spinner { width: 60px; height: 60px; border: 6px solid #f3f3f3; border-top: 6px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
+        
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); padding-bottom: 100px; }
+        #app { max-width: 950px; margin: 20px auto; width: 96%; }
 
         /* ИНТЕРФЕЙС */
-        .home-card { background: var(--white); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
-        .main-title { color: var(--pronto); font-size: 55px; font-weight: 900; margin: 0; line-height: 1; letter-spacing: -2px; }
-        .subtitle { color: #3b82f6; font-size: 40px; font-weight: 900; margin-bottom: 30px; line-height: 1; }
-        
-        .archive-item { background: var(--white); border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; }
-        .archive-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; background: #eee; }
+        .home-card { background: var(--white); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .main-title { font-size: 50px; font-weight: 900; color: var(--pronto); line-height: 1; margin: 0; }
+        .subtitle { font-size: 40px; font-weight: 900; color: #3b82f6; margin-bottom: 30px; line-height: 1; }
+
+        /* АРХИВ */
+        .archive-item { background: var(--white); border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; border-radius: 12px; }
+        .archive-content { display: flex; gap: 15px; align-items: center; }
+        .archive-thumb { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; background: #eee; border: 1px solid #ddd; }
+        .archive-actions { display: flex; gap: 8px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; justify-content: flex-end; }
 
         /* ЛИСТ ТЗ */
-        .document-sheet { background: white !important; padding: 40px; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.1); width: 100%; color: black !important; }
-        .doc-header { display: flex; justify-content: space-between; border-bottom: 4px solid var(--pronto); padding-bottom: 20px; margin-bottom: 20px; }
-        .top-info-grid { display: grid; grid-template-columns: 2.2fr 0.8fr 0.8fr; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        
-        .spec-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
-        .spec-table th { background: #1e293b !important; color: white !important; padding: 12px; text-align: left; }
-        .spec-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: middle; color: black !important; }
-        .section-title td { background: #e0f2fe !important; font-weight: 900; color: #0369a1 !important; text-transform: uppercase; font-size: 12px; padding: 12px; }
+        .document-sheet { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 0 40px rgba(0,0,0,0.15); color: black; }
+        .doc-header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--pronto); padding-bottom: 15px; margin-bottom: 20px; }
+        .top-info-grid { display: grid; grid-template-columns: 2.2fr 0.7fr 0.7fr; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
 
-        /* ВВОД ДАННЫХ */
-        input, select, textarea { width: 100%; border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px; font-size: 14px; font-family: inherit; font-weight: bold; }
-        
+        /* ТАБЛИЦА */
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+        .spec-table td { border: 1px solid #94a3b8; padding: 8px; vertical-align: middle; color: black; }
+        .section-title td { background: #e0f2fe; font-weight: bold; color: #0369a1; text-transform: uppercase; font-size: 11px; padding: 10px; }
+
+        /* ПОЛЯ ВВОДА */
+        input, select, textarea { width: 100%; border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px; font-size: 14px; font-weight: bold; font-family: inherit; background: white; }
+        textarea { resize: none; }
+
         /* КНОПКИ */
-        .footer-btns { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); padding: 20px; display: flex; gap: 15px; justify-content: center; z-index: 1000; border-top: 1px solid var(--border); }
-        .btn { border: none; padding: 16px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; }
-        .btn-success { background: #10b981; } .btn-secondary { background: #64748b; }
-        .close-x { font-size: 40px; cursor: pointer; color: #cbd5e0; background: none; border: none; padding: 0 10px; line-height: 1; }
+        .footer-btns { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; display: flex; gap: 10px; justify-content: center; z-index: 100; border-top: 1px solid #ccc; }
+        .btn { border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; background: var(--pronto); }
+        .btn-mini { padding: 8px 12px; font-size: 14px; border-radius: 6px; border: none; color: white; cursor: pointer; }
+        .close-x { font-size: 30px; cursor: pointer; color: #ccc; background: none; border: none; }
 
-        .modal { position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 450px; text-align: center; color: #1e293b; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 200; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 400px; text-align: center; }
+        
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #eee; border-top: 5px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* --- СТИЛИ ПЕЧАТИ (САМОЕ ВАЖНОЕ) --- */
+        /* === РЕЖИМ ПЕЧАТИ И PDF (ЧИСТЫЙ ЛИСТ) === */
         @media print {
-            body * { visibility: hidden; }
-            .document-sheet, .document-sheet * { visibility: visible; }
+            body { background: white; padding: 0; margin: 0; }
+            #app { margin: 0; width: 100%; max-width: none; }
+            .home-card, .footer-btns, .close-x, .admin-add-btn, .no-print { display: none !important; }
+            
             .document-sheet { 
-                position: absolute; left: 0; top: 0; width: 100%; padding: 0; box-shadow: none; 
+                box-shadow: none; padding: 0; margin: 0; width: 100%; 
+                border: none; position: static;
             }
-            /* Скрываем кнопки добавления (+), рамки селектов и плейсхолдеры */
-            .admin-add-btn, .close-x, .footer-btns, .no-print { display: none !important; }
+            
+            /* Убираем фоны и рамки для экономии чернил */
+            .top-info-grid { background: none; border: none; padding: 0; margin-bottom: 10px; }
+            .section-title td { background: #f0f0f0 !important; color: black !important; border: 1px solid #000 !important; }
+            .spec-table td { border: 1px solid #000 !important; }
             
             /* Превращаем инпуты в текст */
             input, select, textarea { 
                 border: none !important; background: transparent !important; 
-                padding: 0 !important; margin: 0 !important; appearance: none;
-                font-size: 14px !important; font-weight: bold; color: black !important;
+                padding: 0 !important; margin: 0 !important; 
+                appearance: none; -webkit-appearance: none;
+                font-size: 12px !important; color: black !important;
+                overflow: visible;
             }
-            /* Скрываем стрелку селекта */
-            select { -webkit-appearance: none; -moz-appearance: none; text-indent: 1px; text-overflow: ''; }
             
-            /* Разрыв страницы после 5-го раздела (Температуры) */
-            tr.section-title:nth-of-type(6) { page-break-before: always; margin-top: 30px; display: block; }
+            /* Скрываем плейсхолдеры и стрелки */
+            select { text-indent: 0.01px; text-overflow: ""; }
+            ::placeholder { color: transparent; }
             
-            /* Картинка на весь лист */
-            #upload_zone { border: none !important; }
-            #img_text { display: none !important; }
-            #preview_img { max-height: 800px !important; width: 100% !important; object-fit: contain; }
+            /* Разрывы страниц */
+            tr { page-break-inside: avoid; }
         }
+        
+        /* Класс для симуляции печати при генерации PDF */
+        .printing-mode body { background: white; }
+        .printing-mode .document-sheet { padding: 20px; box-shadow: none; }
+        .printing-mode input, .printing-mode select, .printing-mode textarea { 
+            border: none; background: transparent; padding: 0; 
+        }
+        .printing-mode .top-info-grid { background: none; border: none; }
+        .printing-mode .section-title td { background: #f0f0f0; color: black; }
     </style>
 </head>
 <body>
@@ -87,6 +106,7 @@
     <script src="router.js"></script>
 </body>
 </html>
+
 
 
 
