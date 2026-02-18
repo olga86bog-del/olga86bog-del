@@ -57,46 +57,62 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* === РЕЖИМ ПЕЧАТИ И PDF (ЧИСТЫЙ ЛИСТ) === */
+/* === НАСТРОЙКИ ПЕЧАТИ И PDF === */
         @media print {
-            body { background: white; padding: 0; margin: 0; }
-            #app { margin: 0; width: 100%; max-width: none; }
-            .home-card, .footer-btns, .close-x, .admin-add-btn, .no-print { display: none !important; }
+            @page { 
+                margin: 10mm; /* Отступы сверху и снизу 10 мм */
+                size: A4;
+            }
+
+            body { 
+                background: white; 
+                -webkit-print-color-adjust: exact; 
+            }
+
+            /* Скрываем лишнее: кнопки, плюсики админа, крестики */
+            .home-card, .footer-btns, .close-x, .admin-add-btn, .no-print, #loader { 
+                display: none !important; 
+            }
             
             .document-sheet { 
-                box-shadow: none; padding: 0; margin: 0; width: 100%; 
-                border: none; position: static;
+                box-shadow: none; padding: 0; margin: 0; width: 100%; border: none; 
             }
             
-            /* Убираем фоны и рамки для экономии чернил */
-            .top-info-grid { background: none; border: none; padding: 0; margin-bottom: 10px; }
-            .section-title td { background: #f0f0f0 !important; color: black !important; border: 1px solid #000 !important; }
-            .spec-table td { border: 1px solid #000 !important; }
+            /* Управление разрывами страниц: строки не режутся пополам */
+            table, tr, td { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important;
+            }
             
-            /* Превращаем инпуты в текст */
+            /* Раздел "Эскиз" всегда начинаем с новой страницы, если он не влезает */
+            tr.section-title:nth-last-of-type(1) {
+                page-break-before: auto; 
+            }
+
+            /* --- ГЛАВНОЕ: РАМОЧКИ ОСТАЮТСЯ --- */
             input, select, textarea { 
-                border: none !important; background: transparent !important; 
-                padding: 0 !important; margin: 0 !important; 
-                appearance: none; -webkit-appearance: none;
-                font-size: 12px !important; color: black !important;
-                overflow: visible;
+                border: 2px solid #cbd5e1 !important; /* Красивая рамочка */
+                background: white !important; 
+                color: black !important;
+                font-weight: bold;
+                box-shadow: none !important;
+                appearance: none !important; /* Убираем стрелку выпадающего списка */
+                -webkit-appearance: none !important;
+                padding-right: 5px !important; /* Чтобы текст не наезжал */
             }
-            
-            /* Скрываем плейсхолдеры и стрелки */
-            select { text-indent: 0.01px; text-overflow: ""; }
+
+            /* Если поле пустое или "Нет" - делаем текст серым или черным по желанию */
             ::placeholder { color: transparent; }
             
-            /* Разрывы страниц */
-            tr { page-break-inside: avoid; }
+            /* Картинка эскиза растягивается */
+            #upload_zone { border: none !important; }
+            #img_text { display: none !important; }
+            #preview_img { 
+                max-width: 100% !important; 
+                max-height: 900px !important; 
+                display: block !important; 
+            }
         }
-        
-        /* Класс для симуляции печати при генерации PDF */
-        .printing-mode body { background: white; }
-        .printing-mode .document-sheet { padding: 20px; box-shadow: none; }
-        .printing-mode input, .printing-mode select, .printing-mode textarea { 
-            border: none; background: transparent; padding: 0; 
-        }
-        .printing-mode .top-info-grid { background: none; border: none; }
-        .printing-mode .section-title td { background: #f0f0f0; color: black; }
     </style>
 </head>
 <body>
@@ -106,6 +122,7 @@
     <script src="router.js"></script>
 </body>
 </html>
+
 
 
 
