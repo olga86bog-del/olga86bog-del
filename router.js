@@ -348,7 +348,7 @@ const settingsView = () => {
     </div>`;
 };
 
-// Страница: ТЕХНИЧЕСКОЕ ЗАДАНИЕ (TEMPLATE)
+// --- 8. ТАБЛИЦА ТЗ (ВСЕ РАЗДЕЛЫ ВЫРОВНЕНЫ) ---
 const templateView = () => `
     <div class="document-sheet fade-in" id="print-root">
         <div class="doc-header">
@@ -359,88 +359,71 @@ const templateView = () => `
                 </div>
                 <div style="margin-top:10px;">
                     <b style="font-size:16px;">МЕНЕДЖЕР:</b> 
-                    <input type="text" id="manager_name" style="border:none; border-bottom:2px solid #ccc; width:250px; font-size:16px; font-weight:bold;" placeholder="Имя Фамилия">
+                    <input type="text" id="manager_name" style="border:none; border-bottom:2px solid #ccc; width:250px; font-size:16px; font-weight:bold;" placeholder="Фамилия">
                 </div>
             </div>
             <button onclick="navigate('home')" class="close-x no-print">✕</button>
         </div>
         
         <div class="top-info-grid">
-            <div style="padding-right:10px;">
-                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px;">ОБОРУДОВАНИЕ</label>
-                ${renderSelect('equipment_select', 'equipment')}
-            </div>
-            <div style="padding-right:10px;">
-                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px;">ЕД. ИЗМ.</label>
-                <select id="unit" style="width:100%;"><option>шт.</option><option>компл.</option></select>
-            </div>
-            <div>
-                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px;">КОЛИЧЕСТВО</label>
-                <input type="number" id="qty" value="1" style="width:100%;">
-            </div>
+            <div><label style="font-size:11px; font-weight:bold; color:#64748b; display:block;">ОБОРУДОВАНИЕ</label>${renderSelect('equipment_select', 'equipment')}</div>
+            <div><label style="font-size:11px; font-weight:bold; color:#64748b; display:block;">ЕД. ИЗМ.</label><select id="unit"><option>шт.</option><option>компл.</option></select></div>
+            <div><label style="font-size:11px; font-weight:bold; color:#64748b; display:block;">КОЛ-ВО</label><input type="number" id="qty" value="1"></div>
         </div>
 
         <table class="spec-table">
-            <thead>
-                <tr>
-                    <th width="45">№</th>
-                    <th>ПАРАМЕТР</th>
-                    <th>ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ</th>
-                </tr>
-            </thead>
+            <thead><tr><th width="45">№</th><th>ПАРАМЕТР</th><th>ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ</th></tr></thead>
             <tbody>
                 <tr class="section-title"><td colspan="3">1. ГАБАРИТНЫЕ РАЗМЕРЫ (мм)</td></tr>
-                <tr><td>1.1</td><td>Высота изделия (H)</td><td><input type="number" id="h" value="850"> мм</td></tr>
-                <tr><td>1.2</td><td>Ширина изделия (W)</td><td><input type="number" id="w" value="1200"> мм</td></tr>
-                <tr><td>1.3</td><td>Глубина изделия (D)</td><td><input type="number" id="d" value="700"> мм</td></tr>
-                <tr><td>1.4</td><td>Допуск на габариты</td><td>± <input type="number" id="val_1_4" value="5"> мм</td></tr>
+                <tr><td>1.1</td><td>Высота (H)</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="h" value="850" style="width:70px; text-align:center;"> <span>мм</span></div></td></tr>
+                <tr><td>1.2</td><td>Ширина (W)</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="w" value="1200" style="width:70px; text-align:center;"> <span>мм</span></div></td></tr>
+                <tr><td>1.3</td><td>Глубина (D)</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="d" value="700" style="width:70px; text-align:center;"> <span>мм</span></div></td></tr>
+                <tr><td>1.4</td><td>Допуск</td><td><div style="display:flex; align-items:center; gap:5px;"><span>±</span><input type="number" id="val_1_4" value="5" style="width:50px; text-align:center;"> <span>мм</span></div></td></tr>
                 
-                <tr class="section-title"><td colspan="3">2. ИСПОЛНЕНИЕ КОРПУСА</td></tr>
-                <tr><td>2.1</td><td>Материал / Отделка</td><td>${renderSelect('mat', 'materials')}</td></tr>
-                <tr><td>2.2</td><td>Конструкция каркаса</td><td>${renderSelect('con', 'constructions')}</td></tr>
+                <tr class="section-title"><td colspan="3">2. ИСПОЛНЕНИЕ</td></tr>
+                <tr><td>2.1</td><td>Материал</td><td>${renderSelect('mat', 'materials')}</td></tr>
+                <tr><td>2.2</td><td>Конструкция</td><td>${renderSelect('con', 'constructions')}</td></tr>
                 
-                <tr class="section-title"><td colspan="3">3. МЕТОД ОХЛАЖДЕНИЯ</td></tr>
-                <tr><td>3.1</td><td>Тип холодильной системы</td><td>${renderSelect('cool', 'coolingMethods')}</td></tr>
+                <tr class="section-title"><td colspan="3">3. ОХЛАЖДЕНИЕ</td></tr>
+                <tr><td>3.1</td><td>Система</td><td>${renderSelect('cool', 'coolingMethods')}</td></tr>
                 
-                <tr class="section-title"><td colspan="3">4. КОМПЛЕКТАЦИЯ (ДЕТАЛИЗАЦИЯ)</td></tr>
-                <tr><td>4.1</td><td>Столешница (тип/мат)</td><td><div style="display:flex; gap:10px;">${renderSelect('val_4_1', 'tabletops')}${renderSelect('val_4_1_mat', 'tabletopMaterials')}</div></td></tr>
-                <tr><td>4.2</td><td>Гастроёмкости (GN)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_2', 'gnTypes')} глуб: <input type="number" id="val_4_2" value="150" style="width:70px;"> мм</div></td></tr>
-                <tr><td>4.3</td><td>Количество GN</td><td><input type="number" id="val_4_3" value="0"> шт.</td></tr>
-                <tr><td>4.4</td><td>Дверные системы</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_4', 'doorTypes')} <input type="number" id="val_4_4" value="2" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.5</td><td>Выдвижные ящики / Салазки</td><td><div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">${renderSelect('sel_4_5', 'drawerTypes')}${renderSelect('val_4_5_slides', 'slideTypes')}</div></td></tr>
-                <tr><td>4.6</td><td>Полки внутренние</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_6', 'shelfTypes')} <input type="number" id="val_4_6" value="2" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.7</td><td>Нагрузка на полку</td><td><input type="number" id="val_4_7" value="40"> кг</td></tr>
-                <tr><td>4.8</td><td>Освещение</td><td>${renderSelect('val_4_8', 'lighting')}</td></tr>
-                <tr><td>4.9</td><td>Тип опор (ножки)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_9', 'legs')} <input type="number" id="val_4_9" value="4" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.10</td><td>Колеса (с тормозом)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_10', 'wheels')} <input type="number" id="val_4_10" value="2" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.11</td><td>Колеса (без тормоза)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_11', 'wheels')} <input type="number" id="val_4_11" value="2" style="width:70px;"> шт.</div></td></tr>
+                <tr class="section-title"><td colspan="3">4. КОМПЛЕКТАЦИЯ</td></tr>
+                <tr><td>4.1</td><td>Столешница</td><td><div style="display:flex; gap:10px;">${renderSelect('val_4_1', 'tabletops')}${renderSelect('val_4_1_mat', 'tabletopMaterials')}</div></td></tr>
+                <tr><td>4.2</td><td>Гастроёмкости</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_2', 'gnTypes')} <span>глуб:</span> <input type="number" id="val_4_2" value="150" style="width:60px; text-align:center;"> <span>мм</span></div></td></tr>
+                <tr><td>4.3</td><td>Количество GN</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="val_4_3" value="0" style="width:60px; text-align:center;"> <span>шт.</span></div></td></tr>
+                <tr><td>4.4</td><td>Двери</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_4', 'doorTypes')} <input type="number" id="val_4_4" value="2" style="width:50px; text-align:center;"> <span>шт.</span></div></td></tr>
+                <tr><td>4.5</td><td>Ящики / Салазки</td><td><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">${renderSelect('sel_4_5', 'drawerTypes')}${renderSelect('val_4_5_slides', 'slideTypes')}</div></td></tr>
+                <tr><td>4.6</td><td>Полки</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_6', 'shelfTypes')} <input type="number" id="val_4_6" value="2" style="width:50px; text-align:center;"> <span>шт.</span></div></td></tr>
+                <tr><td>4.7</td><td>Нагрузка</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="val_4_7" value="40" style="width:60px; text-align:center;"> <span>кг</span></div></td></tr>
+                <tr><td>4.8</td><td>Подсветка</td><td>${renderSelect('val_4_8', 'lighting')}</td></tr>
+                <tr><td>4.9</td><td>Ножки</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_9', 'legs')} <input type="number" id="val_4_9" value="4" style="width:50px; text-align:center;"> <span>шт.</span></div></td></tr>
+                <tr><td>4.10</td><td>Колеса (торм.)</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_10', 'wheels')} <input type="number" id="val_4_10" value="2" style="width:50px; text-align:center;"> <span>шт.</span></div></td></tr>
+                <tr><td>4.11</td><td>Колеса (б/торм)</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_11', 'wheels')} <input type="number" id="val_4_11" value="2" style="width:50px; text-align:center;"> <span>шт.</span></div></td></tr>
                 <tr><td>4.12</td><td>Вентиляция</td><td>${renderSelect('val_4_12', 'ventilation')}</td></tr>
                 
-                <tr class="section-title"><td colspan="3">5. ТЕМПЕРАТУРНЫЕ ПАРАМЕТРЫ</td></tr>
-                <tr><td>5.1</td><td>Режим в камере</td><td><div style="display:flex; align-items:center; gap:15px;"><b>t° :</b> <input type="text" id="val_5_1" value="+2...+8" style="width:100px; text-align:center;"> <div id="dual_temp_zone" style="display:none; align-items:center; gap:10px;"><b>/ t° :</b> <input type="text" id="val_5_1_2" value="-18" style="width:100px; text-align:center;"></div></div></td></tr>
+                <tr class="section-title"><td colspan="3">5. ТЕМПЕРАТУРА</td></tr>
+                <tr><td>5.1</td><td>Режим</td><td><div style="display:flex; align-items:center; gap:10px;"><span>t° :</span> <input type="text" id="val_5_1" value="+2...+8" style="width:90px; text-align:center;"> <div id="dual_temp_zone" style="display:none; align-items:center; gap:5px;"><span>/ t° :</span> <input type="text" id="val_5_1_2" value="-18" style="width:90px; text-align:center;"></div></div></td></tr>
                 
-                <tr class="section-title"><td colspan="3">6. УСЛОВИЯ СРЕДЫ</td></tr>
-                <tr><td>6.1</td><td>Tраб / Влажность</td><td>до + <input type="number" id="val_6_1" value="32" style="width:60px;"> / до <input type="number" id="val_6_2" value="60" style="width:60px;"> %</td></tr>
+                <tr class="section-title"><td colspan="3">6. СРЕДА</td></tr>
+                <tr><td>6.1</td><td>Условия</td><td><div style="display:flex; align-items:center; gap:5px;"><span>+</span> <input type="number" id="val_6_1" value="32" style="width:50px; text-align:center;"> <span>/</span> <input type="number" id="val_6_2" value="60" style="width:50px; text-align:center;"> <span>%</span></div></td></tr>
 
-                <tr class="section-title"><td colspan="3">7. ГАРАНТИЙНЫЕ ОБЯЗАТЕЛЬСТВА</td></tr>
-                <tr><td>7.1</td><td>Гарантия на изделие</td><td><input type="number" id="val_7_1" value="12"> мес.</td></tr>
+                <tr class="section-title"><td colspan="3">7. ГАРАНТИЯ</td></tr>
+                <tr><td>7.1</td><td>Срок гарантии</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="val_7_1" value="12" style="width:60px; text-align:center; font-weight:bold;"> <span>мес.</span></div></td></tr>
 
                 <tr class="section-title"><td colspan="3">8. СРОК СЛУЖБЫ</td></tr>
-                <tr><td>8.1</td><td>Расчетный срок</td><td><input type="number" id="val_8_1" value="5"> лет</td></tr>
+                <tr><td>8.1</td><td>Расчетный срок</td><td><div style="display:flex; align-items:center; gap:5px;"><input type="number" id="val_8_1" value="5" style="width:60px; text-align:center; font-weight:bold;"> <span>лет</span></div></td></tr>
                 
                 <tr class="section-title"><td colspan="3">9. ЭСКИЗ И ПРИМЕЧАНИЯ</td></tr>
-                <tr>
-                    <td colspan="3">
-                        <div style="display:grid; grid-template-columns: 1fr 320px; gap:25px; min-height:280px; padding:15px 0;">
-                            <textarea id="val_9_1" style="width:100%; height:100%;" placeholder="Дополнительные примечания к ТЗ..."></textarea>
-                            <div style="border:3px dashed #cbd5e1; border-radius:20px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="document.getElementById('file_input').click()" id="upload_zone">
-                                <img id="preview_img" style="display:none; max-width:100%; max-height:100%; object-fit:contain;">
-                                <div id="img_text" style="text-align:center; color:#94a3b8; font-weight:bold;">📷 ФОТО</div>
-                                <input type="file" id="file_input" style="display:none;" onchange="handleFile(this)">
-                            </div>
+                <tr><td colspan="3">
+                    <div style="display:grid; grid-template-columns: 1fr 300px; gap:20px; min-height:250px;">
+                        <textarea id="val_9_1" style="width:100%; resize:none; padding:10px; border:1px solid #cbd5e1; border-radius:10px;" placeholder="Примечание..."></textarea>
+                        <div style="border:3px dashed #cbd5e1; border-radius:15px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="document.getElementById('file_input').click()" id="upload_zone">
+                            <img id="preview_img" style="display:none; max-width:100%; max-height:100%; object-fit:contain;">
+                            <div id="img_text" style="text-align:center; color:#94a3b8; font-weight:bold;">📷 ФОТО</div>
+                            <input type="file" id="file_input" style="display:none;" onchange="handleFile(this)">
                         </div>
-                    </td>
-                </tr>
+                    </div>
+                </td></tr>
             </tbody>
         </table>
 
@@ -550,27 +533,41 @@ function saveToArchive() {
     navigate('home');
 }
 
-// УМНАЯ ПЕЧАТЬ И PDF
+// --- УМНАЯ ПОДГОТОВКА К ПЕЧАТИ ---
 function prepareForPrint(enable) {
     const inputs = document.querySelectorAll('input, select, textarea');
+    
+    // 1. Управляем полями
     inputs.forEach(el => {
         if(enable) {
-            if(el.tagName === 'SELECT' && (el.value === 'Выбор...' || el.value === '-- Выбор --')) {
-                el.style.color = 'transparent';
+            // Если в селекте написано "Выбор" или пусто -> скрываем текст
+            if(el.tagName === 'SELECT' && (el.value.includes('Выбор') || el.value === '')) {
+                el.style.color = 'transparent'; 
             }
+            
+            // Если поле пустое -> делаем его невидимым
             if(!el.value) el.style.opacity = '0';
-            el.style.border = 'none'; // Убираем рамки
-            el.style.background = 'transparent'; // Убираем фон
+
+            // Убираем рамки и серый фон
+            el.style.border = 'none';
+            el.style.background = 'transparent';
+            el.style.padding = '0'; // Убираем отступы, чтобы текст подвинулся
         } else {
-            el.style.color = ''; el.style.opacity = ''; el.style.border = ''; el.style.background = '';
+            // Возвращаем всё назад
+            el.style.color = ''; 
+            el.style.opacity = ''; 
+            el.style.border = ''; 
+            el.style.background = '';
+            el.style.padding = '';
         }
     });
-    
-    // Скрываем зону загрузки, если нет фото
+
+    // 2. Скрываем зону загрузки фото, если фото нет
     const imgText = document.getElementById('img_text');
-    if (imgText) imgText.style.display = enable ? 'none' : (uploadedImageBase64 ? 'none' : 'block');
+    if(imgText) imgText.style.display = enable ? 'none' : (uploadedImageBase64 ? 'none' : 'block');
+    
     const upZone = document.getElementById('upload_zone');
-    if (upZone) upZone.style.border = enable ? 'none' : '';
+    if(upZone) upZone.style.border = enable ? 'none' : '';
 }
 
 function handlePrint() {
@@ -579,62 +576,57 @@ function handlePrint() {
     setTimeout(() => prepareForPrint(false), 1000);
 }
 
-// --- НОВАЯ ФУНКЦИЯ PDF (МНОГОСТРАНИЧНАЯ) ---
+// --- ГЕНЕРАТОР PDF (МНОГОСТРАНИЧНЫЙ) ---
 async function genPDF() {
     const el = document.querySelector('.document-sheet');
     const footer = document.querySelector('.footer-btns');
     const closeBtn = document.querySelector('.close-x');
     
-    // 1. Включаем режим "Как при печати" (убираем рамки, слово "Выбор" и т.д.)
+    // Включаем режим чистовой печати
     prepareForPrint(true);
-    
-    // Прячем кнопки, чтобы они не попали в PDF
     if (footer) footer.style.display = 'none';
     if (closeBtn) closeBtn.style.display = 'none';
 
     try {
-        // 2. Делаем снимок всей длинной страницы
+        // Делаем снимок всего длинного документа
         const canvas = await html2canvas(el, { 
-            scale: 2, // Масштаб 2 (HD), чтобы не тормозило на длинных списках
+            scale: 2, 
             useCORS: true, 
             backgroundColor: '#ffffff' 
         });
 
-        // 3. Вычисляем размеры
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 210; // Ширина А4 в мм
-        const pageHeight = 297; // Высота А4 в мм
-        const imgHeight = (canvas.height * imgWidth) / canvas.width; // Реальная высота твоего документа
-        let heightLeft = imgHeight; // Сколько еще осталось "напечатать"
-
         const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-        let position = 0; // Отступ сверху
+        
+        const imgWidth = 210; // А4 ширина
+        const pageHeight = 297; // А4 высота
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
 
-        // 4. Добавляем первую страницу
+        // Первая страница
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight; // Вычитаем высоту одного листа
+        heightLeft -= pageHeight;
 
-        // 5. Если документ длинный, добавляем следующие страницы
+        // Если документ длиннее одной страницы, добавляем еще
         while (heightLeft >= 0) {
-            position = heightLeft - imgHeight; // Сдвигаем "камеру" вниз
+            position = heightLeft - imgHeight; // Сдвигаем картинку вверх
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
         }
 
-        // 6. Сохраняем файл
-        pdf.save(`TZ_${document.getElementById('tz_no').value || 'PRONTO'}.pdf`);
+        pdf.save(`TZ_${document.getElementById('tz_no').value || 'DOC'}.pdf`);
 
     } catch (err) { 
-        alert("Ошибка создания PDF: " + err); 
+        alert("Ошибка PDF: " + err); 
     } finally { 
-        // 7. Возвращаем всё как было
+        // Возвращаем интерфейс
         if (footer) footer.style.display = 'flex'; 
         if (closeBtn) closeBtn.style.display = 'block';
-        prepareForPrint(false); // Выключаем режим печати
+        prepareForPrint(false);
     }
 }
-
 function deleteFromArchive(i) {
     if(confirm("Удалить проект из архива?")) {
         const arc = getArchive(); 
@@ -664,6 +656,7 @@ function createNewTZ() {
     uploadedImageBase64 = null; 
     navigate('template'); 
 }
+
 
 
 
