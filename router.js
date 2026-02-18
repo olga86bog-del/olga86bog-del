@@ -1,84 +1,138 @@
 /**
- * PRONTO SPECS 2.1 - SYSTEM LOGIC
- * СПИСКОВ ЗДЕСЬ НЕТ (ОНИ В CONFIG.JS)
+ * ======================================================
+ * PRONTO SPECS CLOUD ENGINE | VERSION 2.1 (FINAL)
+ * ======================================================
+ * Разработчик: Тимур
+ * Назначение: Управление логикой приложения, рендеринг,
+ * синхронизация с Firebase и генерация HD документов.
+ * ======================================================
  */
 
-// --- 1. ЗАПУСК ---
+// ======================================================
+// 1. ИНИЦИАЛИЗАЦИЯ И ЖИВАЯ СИНХРОНИЗАЦИЯ
+// ======================================================
+
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("System Start...");
-    
-    // Предохранитель лоадера
+    console.log("[System] Запуск ядра...");
+
+    // Таймер безопасности: если интернет медленный, лоадер исчезнет через 3 сек
     setTimeout(hideLoader, 3000);
 
-    // Подключение к базе. APP_CONFIG берется из config.js
+    // Подключение к базе данных в реальном времени
     db.ref('settings').on('value', (snapshot) => {
         const cloudData = snapshot.val();
-        
+
         if (cloudData) {
-            console.log("Данные из облака получены.");
-            APP_CONFIG = cloudData; // Обновляем глобальную переменную из config.js
-            
+            console.log("[Firebase] Данные успешно загружены.");
+            // Обновляем глобальную конфигурацию данными из облака
+            APP_CONFIG = cloudData;
+
+            // Если пользователь уже на странице ТЗ, обновляем списки на лету
             if (document.getElementById('equipment_select')) {
                 populateSelects();
             }
         } else {
-            console.log("Облако пустое. Загружаем данные из config.js в облако...");
+            console.warn("[Firebase] База пуста. Инициализация...");
+            // Если база чистая, отправляем туда данные из config.js
             db.ref('settings').set(APP_CONFIG);
         }
-        
+
+        // Данные получены — скрываем экран загрузки
         hideLoader();
     });
 
+    // Применяем тему оформления при старте
     applyTheme();
+    
+    // Загружаем главную страницу
     navigate('home');
 });
 
+/**
+ * Функция скрытия загрузочного экрана с анимацией
+ */
 function hideLoader() {
-    const l = document.getElementById('loader');
-    if (l) {
-        l.style.opacity = '0';
-        setTimeout(() => l.style.display = 'none', 500);
+    const loader = document.getElementById('loader');
+    if (loader && loader.style.display !== 'none') {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 500);
     }
 }
 
-// --- 2. ПЕРЕМЕННЫЕ ---
-let uploadedImageBase64 = null;
-let currentManageKey = null;
+// ======================================================
+// 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ХРАНИЛИЩЕ
+// ======================================================
 
-const getArchive = () => JSON.parse(localStorage.getItem('pronto_archive') || '[]');
-const getSettings = () => JSON.parse(localStorage.getItem('pronto_settings') || '{"role":"participant", "theme":"light"}');
+let uploadedImageBase64 = null; // Для хранения фото в Base64
+let currentManageKey = null;    // Для редактирования списков
 
-// --- 3. ФУНКЦИИ СИСТЕМЫ ---
+// Получение архива из локальной памяти браузера
+const getArchive = () => {
+    const data = localStorage.getItem('pronto_archive');
+    return data ? JSON.parse(data) : [];
+};
+
+// Получение настроек пользователя
+const getSettings = () => {
+    const data = localStorage.getItem('pronto_settings');
+    return data ? JSON.parse(data) : { role: "participant", theme: "light" };
+};
+
+// ======================================================
+// 3. СИСТЕМНЫЕ ФУНКЦИИ
+// ======================================================
+
 function applyTheme() {
-    const s = getSettings();
-    document.body.className = s.theme === 'dark' ? 'dark-theme' : '';
+    const settings = getSettings();
+    if (settings.theme === 'dark') {
+        document.body.className = 'dark-theme';
+    } else {
+        document.body.className = '';
+    }
 }
 
 function syncToCloud() {
     db.ref('settings').set(APP_CONFIG)
-        .then(() => console.log("Sync OK"))
-        .catch((err) => console.error(err));
+        .then(() => console.log("Синхронизация успешна"))
+        .catch((err) => console.error("Ошибка сети:", err));
 }
 
+// Главный роутер (переключатель страниц)
 function navigate(view) {
     const app = document.getElementById('app');
     if (!app) return;
 
-    if (view === 'home') app.innerHTML = homeView();
-    else if (view === 'settings') app.innerHTML = settingsView();
-    else if (view === 'template') app.innerHTML = templateView();
-    else app.innerHTML = homeView();
+    if (view === 'home') {
+        app.innerHTML = homeView();
+    } 
+    else if (view === 'settings') {
+        app.innerHTML = settingsView();
+    } 
+    else if (view === 'template') {
+        app.innerHTML = templateView();
+    } 
+    else {
+        app.innerHTML = homeView();
+    }
 
+    // После отрисовки страницы запускаем скрипты
     if (view === 'template') {
         populateSelects();
         checkDualTemp();
     }
+    
     window.scrollTo(0, 0);
 }
 
-// --- 4. ЛОГИКА АДМИНА ---
+// ======================================================
+// 4. ЛОГИКА АДМИНИСТРАТОРА
+// ======================================================
+
 function openManageMenu(key, selectId) {
     if (getSettings().role !== 'admin') return;
+    
     currentManageKey = key;
     renderManageList();
     document.getElementById('manageModal').style.display = 'flex';
@@ -87,18 +141,19 @@ function openManageMenu(key, selectId) {
 function renderManageList() {
     const modalSelect = document.getElementById('manageListSelect');
     if (!modalSelect) return;
-    modalSelect.innerHTML = '';
     
-    // Используем APP_CONFIG, который определен в config.js
+    modalSelect.innerHTML = '';
+    // Берем данные из глобального конфига
     const list = APP_CONFIG[currentManageKey] || [];
     
     list.forEach(item => {
-        modalSelect.add(new Option(item, item));
+        const opt = new Option(item, item);
+        modalSelect.add(opt);
     });
 }
 
 function manAdd() {
-    const val = prompt("Название:");
+    const val = prompt("Введите название нового пункта:");
     if (val && val.trim()) {
         APP_CONFIG[currentManageKey].push(val.trim());
         refreshAfterChange();
@@ -110,7 +165,7 @@ function manEdit() {
     const oldVal = modalSelect.value;
     if (!oldVal) return;
     
-    const newVal = prompt("Изменить на:", oldVal);
+    const newVal = prompt("Изменить название:", oldVal);
     if (newVal && newVal.trim() && newVal !== oldVal) {
         const idx = APP_CONFIG[currentManageKey].indexOf(oldVal);
         APP_CONFIG[currentManageKey][idx] = newVal.trim();
@@ -120,7 +175,7 @@ function manEdit() {
 
 function manDel() {
     const modalSelect = document.getElementById('manageListSelect');
-    if (confirm("Удалить?")) {
+    if (confirm(`Вы уверены, что хотите удалить "${modalSelect.value}"?`)) {
         APP_CONFIG[currentManageKey] = APP_CONFIG[currentManageKey].filter(v => v !== modalSelect.value);
         refreshAfterChange();
     }
@@ -128,86 +183,134 @@ function manDel() {
 
 function refreshAfterChange() {
     renderManageList();
-    if (document.getElementById('equipment_select')) populateSelects();
+    if (document.getElementById('equipment_select')) {
+        populateSelects();
+    }
     syncToCloud();
 }
 
+// Функция отрисовки выпадающего списка с кнопкой "+"
 function renderSelect(id, configKey) {
     const isAdmin = getSettings().role === 'admin';
-    const btnHTML = isAdmin ? `<button onclick="openManageMenu('${configKey}', '${id}')" class="admin-add-btn no-print" style="margin-left:5px; background:#10b981; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">+</button>` : '';
-    return `<div style="display:flex; align-items:center; width:100%; gap:5px;"><select id="${id}" style="flex-grow:1; padding:10px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;"></select>${btnHTML}</div>`;
+    let btnHTML = '';
+    
+    if (isAdmin) {
+        btnHTML = `
+            <button 
+                onclick="openManageMenu('${configKey}', '${id}')" 
+                class="admin-add-btn no-print" 
+                style="margin-left:5px; background:#10b981; color:white; border:none; border-radius:8px; width:32px; height:36px; font-weight:bold; cursor:pointer;"
+            >
+                +
+            </button>`;
+    }
+    
+    return `
+        <div style="display:flex; align-items:center; width:100%;">
+            <select id="${id}" style="flex-grow:1;"></select>
+            ${btnHTML}
+        </div>`;
 }
 
-// --- 5. ШАБЛОНЫ (HTML) ---
-const modalsHTML = `
-<div id="loginModal" class="modal" style="display:none">
-    <div class="modal-content">
-        <h3 style="color:var(--pronto); margin-top:0;">ВХОД АДМИНА</h3>
-        <input type="password" id="inputPassword" placeholder="Пароль" style="width:100%; padding:15px; margin-bottom:20px; border:1px solid #ccc; border-radius:10px; font-size:16px;">
-        <div style="display:flex; gap:10px;">
-            <button onclick="closeModals()" class="btn btn-secondary" style="flex:1;">ОТМЕНА</button>
-            <button onclick="checkLogin()" class="btn" style="flex:1;">ВОЙТИ</button>
-        </div>
-    </div>
-</div>
-<div id="changePassModal" class="modal" style="display:none">
-    <div class="modal-content">
-        <h3>НОВЫЙ ПАРОЛЬ</h3>
-        <input type="password" id="newPassword" placeholder="Мин. 3 символа" style="width:100%; padding:15px; margin-bottom:20px; border:1px solid #ccc; border-radius:10px;">
-        <div style="display:flex; gap:10px;">
-            <button onclick="closeModals()" class="btn btn-secondary" style="flex:1;">ОТМЕНА</button>
-            <button onclick="saveNewCredentials()" class="btn" style="flex:1; background:orange;">СОХРАНИТЬ</button>
-        </div>
-    </div>
-</div>
-<div id="manageModal" class="modal" style="display:none">
-    <div class="modal-content" style="width:450px;">
-        <h3>РЕДАКТОР</h3>
-        <select id="manageListSelect" style="width:100%; padding:10px; margin-bottom:20px; border-radius:10px; font-weight:bold;"></select>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <button onclick="manAdd()" class="btn btn-success">➕ ДОБАВИТЬ</button>
-            <button onclick="manEdit()" class="btn btn-warning">✏️ ИЗМЕНИТЬ</button>
-            <button onclick="manDel()" class="btn btn-danger">🗑️ УДАЛИТЬ</button>
-            <button onclick="closeModals()" class="btn btn-secondary">ЗАКРЫТЬ</button>
-        </div>
-    </div>
-</div>`;
+// ======================================================
+// 5. HTML ШАБЛОНЫ (VIEWS)
+// ======================================================
 
-// ГЛАВНАЯ СТРАНИЦА
-const homeView = () => `
+// Модальные окна (Вход, Пароль, Редактор)
+const modalsHTML = `
+    <div id="loginModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <h3 style="color:var(--pronto); margin-top:0;">ВХОД АДМИНИСТРАТОРА</h3>
+            <input type="password" id="inputPassword" placeholder="Пароль" style="width:100%; padding:12px; margin-bottom:20px; border-radius:10px; border:1px solid #ccc;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeModals()" class="btn btn-secondary" style="flex:1;">ОТМЕНА</button>
+                <button onclick="checkLogin()" class="btn" style="flex:1;">ВОЙТИ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="changePassModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <h3>СМЕНА ПАРОЛЯ</h3>
+            <input type="password" id="newPassword" placeholder="Новый пароль" style="width:100%; padding:12px; margin-bottom:20px; border-radius:10px; border:1px solid #ccc;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeModals()" class="btn btn-secondary" style="flex:1;">ОТМЕНА</button>
+                <button onclick="saveNewCredentials()" class="btn" style="flex:1; background:orange;">СОХРАНИТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="manageModal" class="modal" style="display:none">
+        <div class="modal-content" style="width:450px;">
+            <h3>РЕДАКТОР СПИСКА</h3>
+            <select id="manageListSelect" style="width:100%; padding:10px; margin-bottom:20px; border-radius:10px; font-weight:bold;"></select>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button onclick="manAdd()" class="btn btn-success">➕ ДОБАВИТЬ</button>
+                <button onclick="manEdit()" class="btn btn-warning">✏️ ИЗМЕНИТЬ</button>
+                <button onclick="manDel()" class="btn btn-danger">🗑️ УДАЛИТЬ</button>
+                <button onclick="closeModals()" class="btn btn-secondary">ЗАКРЫТЬ</button>
+            </div>
+        </div>
+    </div>
+`;
+
+// Страница: ГЛАВНАЯ (HOME)
+const homeView = () => {
+    const archive = getArchive();
+    
+    return `
     <div class="home-card fade-in">
-        <h1 class="main-title">PRODUCTION</h1><div class="subtitle">SPECS</div>
+        <h1 class="main-title">PRODUCTION</h1>
+        <div class="subtitle">SPECS</div>
         
-        <div style="text-align:left; background:#f8fafc; padding:30px; border-radius:15px; margin:30px 0; border-left:8px solid var(--pronto); color:#475569; font-size:15px; line-height:1.6;">
+        <div style="text-align:left; background:#f8fafc; padding:25px; border-radius:15px; margin:25px 0; border-left:6px solid var(--pronto); color:#475569; font-size:14px; line-height:1.6;">
             <p><strong>PRODUCTION SPECS</strong> — цифровая экосистема компании PRONTO.</p>
             <p>Система предназначена для мгновенной синхронизации технических заданий между всеми подразделениями производства в режиме реального времени.</p>
         </div>
 
-        <button onclick="createNewTZ()" class="btn" style="height:85px; width:100%; font-size:24px; margin-bottom:20px; box-shadow: 0 10px 25px rgba(43, 108, 176, 0.3);">+ СОЗДАТЬ ТЗ</button>
-        <button onclick="navigate('settings')" class="btn btn-secondary" style="width:100%;">НАСТРОЙКИ СИСТЕМЫ</button>
+        <button onclick="createNewTZ()" class="btn" style="height:85px; width:100%; font-size:22px; margin-bottom:20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+            + СОЗДАТЬ ТЗ
+        </button>
+        
+        <button onclick="navigate('settings')" class="btn btn-secondary" style="width:100%;">
+            НАСТРОЙКИ СИСТЕМЫ
+        </button>
         
         <div style="margin-top:70px; text-align:left;">
             <h4 style="border-bottom:3px solid var(--border); padding-bottom:15px; color:var(--pronto); font-weight:900;">ПОСЛЕДНИЕ ПРОЕКТЫ</h4>
-            ${getArchive().map((item, i) => `
+            
+            ${archive.length > 0 ? archive.map((item, i) => `
                 <div class="archive-item">
-                    ${item.image ? `<img src="${item.image}" class="archive-thumb">` : `<div class="archive-thumb" style="display:flex; align-items:center; justify-content:center; color:#ccc; font-weight:bold;">ФОТО</div>`}
-                    <div style="flex:1;">
-                        <b style="font-size:20px; color:var(--pronto);">№ ${item.tz_no}</b>
-                        <div style="font-size:15px; margin-top:5px; font-weight:bold;">${item.eq}</div>
-                        <div style="font-size:13px; color:#64748b; margin-top:3px;">Менеджер: ${item.manager || '—'} | ${item.date}</div>
+                    <div class="archive-content" style="display:flex; align-items:center; gap:15px; width:100%;">
+                        ${item.image ? 
+                            `<img src="${item.image}" class="archive-thumb">` : 
+                            `<div class="archive-thumb" style="display:flex; align-items:center; justify-content:center; color:#ccc;">📷</div>`
+                        }
+                        <div style="flex:1;">
+                            <b style="font-size:18px; color:var(--pronto);">№ ${item.tz_no}</b>
+                            <div style="font-size:14px; margin-top:5px; font-weight:bold;">${item.eq}</div>
+                            <div style="font-size:12px; color:#64748b; margin-top:3px;">Менеджер: ${item.manager || '—'} | ${item.date}</div>
+                        </div>
                     </div>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="deleteFromArchive(${i})" class="btn" style="width:50px; background:red; padding:10px; margin:0;">🗑️</button>
-                        <button onclick="editFromArchive(${i})" class="btn" style="width:50px; background:#10b981; padding:10px; margin:0;">📂</button>
+                    
+                    <div class="archive-actions" style="margin-top:15px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button onclick="editFromArchive(${i})" class="btn-mini" style="background:#10b981;" title="Открыть">📂</button>
+                        <button onclick="alert('Печать...')" class="btn-mini" style="background:#3b82f6;" title="PDF">📄</button>
+                        <button onclick="alert('Печать...')" class="btn-mini" style="background:#64748b;" title="Печать">🖨️</button>
+                        <button onclick="editFromArchive(${i})" class="btn-mini" style="background:#f59e0b;" title="Редактировать">✏️</button>
+                        <button onclick="deleteFromArchive(${i})" class="btn-mini" style="background:#ef4444;" title="Удалить">🗑️</button>
                     </div>
-                </div>`).join('')}
+                </div>
+            `).join('') : '<p style="text-align:center; color:#94a3b8; padding:40px;">Архив пуст</p>'}
         </div>
     </div>`;
+};
 
-// НАСТРОЙКИ
+// Страница: НАСТРОЙКИ (SETTINGS)
 const settingsView = () => {
     const s = getSettings();
     const isAdmin = s.role === 'admin';
+    
     return `
     <div class="home-card fade-in">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
@@ -216,19 +319,28 @@ const settingsView = () => {
         </div>
         
         <div style="text-align:left; max-width:600px; margin:0 auto;">
-            <label style="font-weight:bold; display:block; margin-bottom:10px;">ТЕМА ОФОРМЛЕНИЯ:</label>
-            <select id="theme_select" style="width:100%; padding:15px; border-radius:10px; border:2px solid var(--border); margin-bottom:30px; font-size:16px;">
-                <option value="light" ${s.theme==='light'?'selected':''}>Светлая тема</option>
-                <option value="dark" ${s.theme==='dark'?'selected':''}>Темная тема</option>
-            </select>
+            <div style="margin-bottom:30px;">
+                <label style="font-weight:bold; display:block; margin-bottom:10px;">ТЕМА ОФОРМЛЕНИЯ:</label>
+                <select id="theme_select" style="width:100%;">
+                    <option value="light" ${s.theme==='light'?'selected':''}>Светлая тема</option>
+                    <option value="dark" ${s.theme==='dark'?'selected':''}>Темная тема</option>
+                </select>
+            </div>
 
-            <label style="font-weight:bold; display:block; margin-bottom:10px;">РОЛЬ:</label>
-            <select id="role_select" onchange="handleRole(this)" style="width:100%; padding:15px; border-radius:10px; border:2px solid var(--border); margin-bottom:30px; font-size:16px;">
-                <option value="participant" ${!isAdmin?'selected':''}>Участник</option>
-                <option value="admin" ${isAdmin?'selected':''}>Администратор</option>
-            </select>
+            <div style="margin-bottom:30px;">
+                <label style="font-weight:bold; display:block; margin-bottom:10px;">РОЛЬ ПОЛЬЗОВАТЕЛЯ:</label>
+                <select id="role_select" onchange="handleRole(this)" style="width:100%;">
+                    <option value="participant" ${!isAdmin?'selected':''}>Участник</option>
+                    <option value="admin" ${isAdmin?'selected':''}>Администратор</option>
+                </select>
+            </div>
 
-            ${isAdmin ? `<button onclick="document.getElementById('changePassModal').style.display='flex'" class="btn" style="background:orange; width:100%; margin-bottom:20px;">🔐 СМЕНИТЬ ПАРОЛЬ</button>` : ''}
+            ${isAdmin ? `
+                <div style="background:rgba(255,255,255,0.5); padding:20px; border:2px solid var(--pronto); border-radius:15px; margin-bottom:30px; text-align:center;">
+                    <h4 style="margin-top:0;">БЕЗОПАСНОСТЬ</h4>
+                    <button onclick="document.getElementById('changePassModal').style.display='flex'" class="btn" style="background:orange; width:100%;">СМЕНИТЬ ПАРОЛЬ</button>
+                </div>
+            ` : ''}
             
             <button onclick="saveSettings()" class="btn btn-secondary" style="width:100%; height:60px; font-size:18px;">СОХРАНИТЬ</button>
         </div>
@@ -236,18 +348,18 @@ const settingsView = () => {
     </div>`;
 };
 
-// ШАБЛОН ТЗ
+// Страница: ТЕХНИЧЕСКОЕ ЗАДАНИЕ (TEMPLATE)
 const templateView = () => `
-    <div class="document-sheet fade-in">
+    <div class="document-sheet fade-in" id="print-root">
         <div class="doc-header">
             <div style="flex-grow:1;">
-                <div style="display:flex; align-items:center; margin-top:5px;">
-                    <span style="font-weight:900; color:var(--pronto); font-size:36px; margin-right:15px;">SPECS №</span>
-                    <input type="text" id="tz_no" style="width:180px; font-size:36px; border:none; font-weight:900; outline:none; color:black; background:transparent;" placeholder="000-00">
+                <div style="display:flex; align-items:center;">
+                    <span style="font-weight:900; color:var(--pronto); font-size:32px; margin-right:15px;">SPECS №</span>
+                    <input type="text" id="tz_no" style="width:160px; font-size:32px; border:none; font-weight:900;" placeholder="000-00">
                 </div>
-                <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
+                <div style="margin-top:10px;">
                     <b style="font-size:16px;">МЕНЕДЖЕР:</b> 
-                    <input type="text" id="manager_name" style="border:none; border-bottom:2px solid #cbd5e1; width:300px; font-size:16px; padding:5px; color:black; font-weight:bold;" placeholder="Имя Фамилия">
+                    <input type="text" id="manager_name" style="border:none; border-bottom:2px solid #ccc; width:250px; font-size:16px; font-weight:bold;" placeholder="Имя Фамилия">
                 </div>
             </div>
             <button onclick="navigate('home')" class="close-x no-print">✕</button>
@@ -255,84 +367,94 @@ const templateView = () => `
         
         <div class="top-info-grid">
             <div style="padding-right:10px;">
-                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px; text-transform:uppercase;">ОБОРУДОВАНИЕ</label>
+                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px;">ОБОРУДОВАНИЕ</label>
                 ${renderSelect('equipment_select', 'equipment')}
             </div>
             <div style="padding-right:10px;">
-                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px; text-transform:uppercase;">ЕД. ИЗМ.</label>
-                <select id="unit" style="padding:10px; border-radius:8px; border:1px solid #cbd5e1; width:100%; font-weight:bold;"><option>шт.</option><option>компл.</option></select>
+                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px;">ЕД. ИЗМ.</label>
+                <select id="unit" style="width:100%;"><option>шт.</option><option>компл.</option></select>
             </div>
             <div>
-                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px; text-transform:uppercase;">КОЛИЧЕСТВО</label>
-                <input type="number" id="qty" value="1" style="padding:10px; border-radius:8px; border:1px solid #cbd5e1; width:100%; font-weight:bold; font-size:16px;">
+                <label style="font-size:11px; font-weight:bold; color:#64748b; display:block; margin-bottom:5px;">КОЛИЧЕСТВО</label>
+                <input type="number" id="qty" value="1" style="width:100%;">
             </div>
         </div>
 
         <table class="spec-table">
-            <thead><tr><th width="45">№</th><th>ПАРАМЕТР</th><th>ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ</th></tr></thead>
+            <thead>
+                <tr>
+                    <th width="45">№</th>
+                    <th>ПАРАМЕТР</th>
+                    <th>ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ</th>
+                </tr>
+            </thead>
             <tbody>
-                <tr class="section-title"><td colspan="3">1. ГАБАРИТЫ (мм)</td></tr>
-                <tr><td>1.1</td><td>Высота (H)</td><td><input type="number" id="h" value="850" style="width:100px;"> мм</td></tr>
-                <tr><td>1.2</td><td>Ширина (W)</td><td><input type="number" id="w" value="1200" style="width:100px;"> мм</td></tr>
-                <tr><td>1.3</td><td>Глубина (D)</td><td><input type="number" id="d" value="700" style="width:100px;"> мм</td></tr>
-                <tr><td>1.4</td><td>Допуск</td><td>± <input type="number" id="val_1_4" value="5" style="width:60px;"> мм</td></tr>
+                <tr class="section-title"><td colspan="3">1. ГАБАРИТНЫЕ РАЗМЕРЫ (мм)</td></tr>
+                <tr><td>1.1</td><td>Высота изделия (H)</td><td><input type="number" id="h" value="850"> мм</td></tr>
+                <tr><td>1.2</td><td>Ширина изделия (W)</td><td><input type="number" id="w" value="1200"> мм</td></tr>
+                <tr><td>1.3</td><td>Глубина изделия (D)</td><td><input type="number" id="d" value="700"> мм</td></tr>
+                <tr><td>1.4</td><td>Допуск на габариты</td><td>± <input type="number" id="val_1_4" value="5"> мм</td></tr>
                 
-                <tr class="section-title"><td colspan="3">2. ИСПОЛНЕНИЕ</td></tr>
-                <tr><td>2.1</td><td>Материал</td><td>${renderSelect('mat', 'materials')}</td></tr>
-                <tr><td>2.2</td><td>Конструкция</td><td>${renderSelect('con', 'constructions')}</td></tr>
+                <tr class="section-title"><td colspan="3">2. ИСПОЛНЕНИЕ КОРПУСА</td></tr>
+                <tr><td>2.1</td><td>Материал / Отделка</td><td>${renderSelect('mat', 'materials')}</td></tr>
+                <tr><td>2.2</td><td>Конструкция каркаса</td><td>${renderSelect('con', 'constructions')}</td></tr>
                 
-                <tr class="section-title"><td colspan="3">3. ОХЛАЖДЕНИЕ</td></tr>
-                <tr><td>3.1</td><td>Тип системы</td><td>${renderSelect('cool', 'coolingMethods')}</td></tr>
+                <tr class="section-title"><td colspan="3">3. МЕТОД ОХЛАЖДЕНИЯ</td></tr>
+                <tr><td>3.1</td><td>Тип холодильной системы</td><td>${renderSelect('cool', 'coolingMethods')}</td></tr>
                 
-                <tr class="section-title"><td colspan="3">4. КОМПЛЕКТАЦИЯ</td></tr>
-                <tr><td>4.1</td><td>Столешница</td><td><div style="display:flex; gap:10px;">${renderSelect('val_4_1', 'tabletops')}${renderSelect('val_4_1_mat', 'tabletopMaterials')}</div></td></tr>
-                <tr><td>4.2</td><td>Гастроёмкости</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_2', 'gnTypes')} глуб: <input type="number" id="val_4_2" value="150" style="width:70px;"> мм</div></td></tr>
-                <tr><td>4.3</td><td>Количество GN</td><td><input type="number" id="val_4_3" value="0" style="width:100px;"> шт.</td></tr>
-                <tr><td>4.4</td><td>Двери</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_4', 'doorTypes')} <input type="number" id="val_4_4" value="2" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.5</td><td>Ящики / Салазки</td><td><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">${renderSelect('sel_4_5', 'drawerTypes')}${renderSelect('val_4_5_slides', 'slideTypes')}</div></td></tr>
-                <tr><td>4.6</td><td>Полки</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_6', 'shelfTypes')} <input type="number" id="val_4_6" value="2" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.7</td><td>Нагрузка полки</td><td><input type="number" id="val_4_7" value="40" style="width:80px;"> кг</td></tr>
-                <tr><td>4.8</td><td>Подсветка</td><td>${renderSelect('val_4_8', 'lighting')}</td></tr>
-                <tr><td>4.9</td><td>Ножки</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_9', 'legs')} <input type="number" id="val_4_9" value="4" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.10</td><td>Колеса (торм.)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_10', 'wheels')} <input type="number" id="val_4_10" value="2" style="width:70px;"> шт.</div></td></tr>
-                <tr><td>4.11</td><td>Колеса (б/торм)</td><td><div style="display:flex; align-items:center; gap:5px;">${renderSelect('sel_4_11', 'wheels')} <input type="number" id="val_4_11" value="2" style="width:70px;"> шт.</div></td></tr>
+                <tr class="section-title"><td colspan="3">4. КОМПЛЕКТАЦИЯ (ДЕТАЛИЗАЦИЯ)</td></tr>
+                <tr><td>4.1</td><td>Столешница (тип/мат)</td><td><div style="display:flex; gap:10px;">${renderSelect('val_4_1', 'tabletops')}${renderSelect('val_4_1_mat', 'tabletopMaterials')}</div></td></tr>
+                <tr><td>4.2</td><td>Гастроёмкости (GN)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_2', 'gnTypes')} глуб: <input type="number" id="val_4_2" value="150" style="width:70px;"> мм</div></td></tr>
+                <tr><td>4.3</td><td>Количество GN</td><td><input type="number" id="val_4_3" value="0"> шт.</td></tr>
+                <tr><td>4.4</td><td>Дверные системы</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_4', 'doorTypes')} <input type="number" id="val_4_4" value="2" style="width:70px;"> шт.</div></td></tr>
+                <tr><td>4.5</td><td>Выдвижные ящики / Салазки</td><td><div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">${renderSelect('sel_4_5', 'drawerTypes')}${renderSelect('val_4_5_slides', 'slideTypes')}</div></td></tr>
+                <tr><td>4.6</td><td>Полки внутренние</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_6', 'shelfTypes')} <input type="number" id="val_4_6" value="2" style="width:70px;"> шт.</div></td></tr>
+                <tr><td>4.7</td><td>Нагрузка на полку</td><td><input type="number" id="val_4_7" value="40"> кг</td></tr>
+                <tr><td>4.8</td><td>Освещение</td><td>${renderSelect('val_4_8', 'lighting')}</td></tr>
+                <tr><td>4.9</td><td>Тип опор (ножки)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_9', 'legs')} <input type="number" id="val_4_9" value="4" style="width:70px;"> шт.</div></td></tr>
+                <tr><td>4.10</td><td>Колеса (с тормозом)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_10', 'wheels')} <input type="number" id="val_4_10" value="2" style="width:70px;"> шт.</div></td></tr>
+                <tr><td>4.11</td><td>Колеса (без тормоза)</td><td><div style="display:flex; align-items:center; gap:10px;">${renderSelect('sel_4_11', 'wheels')} <input type="number" id="val_4_11" value="2" style="width:70px;"> шт.</div></td></tr>
                 <tr><td>4.12</td><td>Вентиляция</td><td>${renderSelect('val_4_12', 'ventilation')}</td></tr>
                 
-                <tr class="section-title"><td colspan="3">5. ТЕМПЕРАТУРА</td></tr>
-                <tr><td>5.1</td><td>Режим</td><td><div style="display:flex; align-items:center; gap:15px;"><b>t° :</b> <input type="text" id="val_5_1" value="+2...+8" style="width:90px; text-align:center; font-weight:bold; border:1px solid #cbd5e1; border-radius:4px; padding:5px;"> <div id="dual_temp_zone" style="display:none; align-items:center; gap:10px;"><b>/ t° :</b> <input type="text" id="val_5_1_2" value="-18" style="width:90px; text-align:center;"></div></div></td></tr>
+                <tr class="section-title"><td colspan="3">5. ТЕМПЕРАТУРНЫЕ ПАРАМЕТРЫ</td></tr>
+                <tr><td>5.1</td><td>Режим в камере</td><td><div style="display:flex; align-items:center; gap:15px;"><b>t° :</b> <input type="text" id="val_5_1" value="+2...+8" style="width:100px; text-align:center;"> <div id="dual_temp_zone" style="display:none; align-items:center; gap:10px;"><b>/ t° :</b> <input type="text" id="val_5_1_2" value="-18" style="width:100px; text-align:center;"></div></div></td></tr>
                 
-                <tr class="section-title"><td colspan="3">6. СРЕДА</td></tr>
-                <tr><td>6.1</td><td>Раб. условия</td><td>+ <input type="number" id="val_6_1" value="32" style="width:50px"> / <input type="number" id="val_6_2" value="60" style="width:50px"> %</td></tr>
+                <tr class="section-title"><td colspan="3">6. УСЛОВИЯ СРЕДЫ</td></tr>
+                <tr><td>6.1</td><td>Tраб / Влажность</td><td>до + <input type="number" id="val_6_1" value="32" style="width:60px;"> / до <input type="number" id="val_6_2" value="60" style="width:60px;"> %</td></tr>
 
-                <tr class="section-title"><td colspan="3">7. ГАРАНТИЯ</td></tr>
-                <tr><td>7.1</td><td>Срок гарантии</td><td><input type="number" id="val_7_1" value="12" style="width:80px; font-weight:bold;"> мес.</td></tr>
+                <tr class="section-title"><td colspan="3">7. ГАРАНТИЙНЫЕ ОБЯЗАТЕЛЬСТВА</td></tr>
+                <tr><td>7.1</td><td>Гарантия на изделие</td><td><input type="number" id="val_7_1" value="12"> мес.</td></tr>
 
-                <tr class="section-title"><td colspan="3">8. СРОК ИЗГОТОВЛЕНИЯ</td></tr>
-                <tr><td>8.1</td><td>Дней</td><td><input type="number" id="val_8_1" value="10" style="width:80px; font-weight:bold;"> дн.</td></tr>
+                <tr class="section-title"><td colspan="3">8. СРОК СЛУЖБЫ</td></tr>
+                <tr><td>8.1</td><td>Расчетный срок</td><td><input type="number" id="val_8_1" value="5"> лет</td></tr>
                 
-                <tr class="section-title"><td colspan="3">9. ЭСКИЗ</td></tr>
-                <tr><td colspan="3">
-                    <div style="display:grid; grid-template-columns: 1fr 300px; gap:20px; min-height:250px; padding:10px 0;">
-                        <textarea id="val_9_1" style="width:100%; height:100%; resize:none; padding:15px; border:1px solid #cbd5e1; border-radius:10px;" placeholder="Примечание..."></textarea>
-                        <div style="border:3px dashed #cbd5e1; border-radius:15px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#f8fafc;" onclick="document.getElementById('file_input').click()">
-                            <img id="preview_img" style="display:none; max-width:100%; max-height:100%; object-fit:contain;">
-                            <div id="img_text" style="text-align:center; color:#94a3b8; font-weight:bold;">📷 ФОТО</div>
-                            <input type="file" id="file_input" style="display:none;" onchange="handleFile(this)">
+                <tr class="section-title"><td colspan="3">9. ЭСКИЗ И ПРИМЕЧАНИЯ</td></tr>
+                <tr>
+                    <td colspan="3">
+                        <div style="display:grid; grid-template-columns: 1fr 320px; gap:25px; min-height:280px; padding:15px 0;">
+                            <textarea id="val_9_1" style="width:100%; height:100%;" placeholder="Дополнительные примечания к ТЗ..."></textarea>
+                            <div style="border:3px dashed #cbd5e1; border-radius:20px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="document.getElementById('file_input').click()" id="upload_zone">
+                                <img id="preview_img" style="display:none; max-width:100%; max-height:100%; object-fit:contain;">
+                                <div id="img_text" style="text-align:center; color:#94a3b8; font-weight:bold;">📷 ФОТО</div>
+                                <input type="file" id="file_input" style="display:none;" onchange="handleFile(this)">
+                            </div>
                         </div>
-                    </div>
-                </td></tr>
+                    </td>
+                </tr>
             </tbody>
         </table>
 
         <div class="footer-btns no-print">
-            <button class="btn btn-success" onclick="saveToArchive()" style="flex:1.2;">В АРХИВ</button>
-            <button class="btn btn-secondary" onclick="handlePrint()" style="flex:1;">ПЕЧАТЬ</button>
-            <button class="btn" onclick="genPDF()" style="background:#2b6cb0; flex:1;">PDF</button>
+            <button class="btn btn-success" onclick="saveToArchive()">В АРХИВ</button>
+            <button class="btn btn-secondary" onclick="handlePrint()">ПЕЧАТЬ</button>
+            <button class="btn" onclick="genPDF()" style="background:#2b6cb0;">PDF</button>
         </div>
         ${modalsHTML}
     </div>`;
 
-// --- 6. ЛОГИКА (ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ) ---
+// ======================================================
+// 10. ОБРАБОТЧИКИ СОБЫТИЙ И ЛОГИКА
+// ======================================================
 
 function populateSelects() {
     const map = { 
@@ -355,19 +477,49 @@ function populateSelects() {
 
 function checkDualTemp() {
     const el = document.getElementById('equipment_select'); 
-    if(el) document.getElementById('dual_temp_zone').style.display = el.value.toLowerCase().includes('комби') ? 'flex' : 'none';
+    if (el) {
+        const zone = document.getElementById('dual_temp_zone');
+        if (zone) {
+            zone.style.display = el.value.toLowerCase().includes('комби') ? 'flex' : 'none';
+        }
+    }
 }
 
-function handleRole(el) { if (el.value === 'admin') document.getElementById('loginModal').style.display = 'flex'; }
-function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-function checkLogin() { if (document.getElementById('inputPassword').value === APP_CONFIG.adminPassword) { localStorage.setItem('pronto_settings', JSON.stringify({role: 'admin', theme: getSettings().theme})); closeModals(); navigate('settings'); } else alert("Неверно!"); }
-function saveNewCredentials() { const p = document.getElementById('newPassword').value; APP_CONFIG.adminPassword = p; syncToCloud(); closeModals(); alert("Пароль обновлен"); }
+function handleRole(el) { 
+    if (el.value === 'admin') {
+        document.getElementById('loginModal').style.display = 'flex'; 
+    }
+}
+
+function closeModals() { 
+    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); 
+}
+
+function checkLogin() {
+    if (document.getElementById('inputPassword').value === APP_CONFIG.adminPassword) {
+        localStorage.setItem('pronto_settings', JSON.stringify({role: 'admin', theme: getSettings().theme}));
+        closeModals(); 
+        navigate('settings');
+    } else {
+        alert("Неверно!");
+    }
+}
+
+function saveNewCredentials() {
+    const p = document.getElementById('newPassword').value;
+    if (p.length < 3) return alert("Пароль слишком короткий!");
+    APP_CONFIG.adminPassword = p; 
+    syncToCloud(); 
+    closeModals(); 
+    alert("Пароль обновлен");
+}
 
 function saveSettings() {
     const r = document.getElementById('role_select').value;
     const t = document.getElementById('theme_select').value;
     localStorage.setItem('pronto_settings', JSON.stringify({role: r, theme: t}));
-    applyTheme(); navigate('home');
+    applyTheme(); 
+    navigate('home');
 }
 
 function handleFile(input) {
@@ -377,8 +529,9 @@ function handleFile(input) {
         r.onload = e => {
             uploadedImageBase64 = e.target.result;
             const img = document.getElementById('preview_img');
-            img.src = e.target.result; img.style.display='block';
-            document.getElementById('img_text').style.display='none';
+            img.src = e.target.result; 
+            img.style.display = 'block';
+            document.getElementById('img_text').style.display = 'none';
         };
         r.readAsDataURL(f);
     }
@@ -397,6 +550,7 @@ function saveToArchive() {
     navigate('home');
 }
 
+// УМНАЯ ПЕЧАТЬ И PDF
 function prepareForPrint(enable) {
     const inputs = document.querySelectorAll('input, select, textarea');
     inputs.forEach(el => {
@@ -405,10 +559,18 @@ function prepareForPrint(enable) {
                 el.style.color = 'transparent';
             }
             if(!el.value) el.style.opacity = '0';
+            el.style.border = 'none'; // Убираем рамки
+            el.style.background = 'transparent'; // Убираем фон
         } else {
-            el.style.color = ''; el.style.opacity = '';
+            el.style.color = ''; el.style.opacity = ''; el.style.border = ''; el.style.background = '';
         }
     });
+    
+    // Скрываем зону загрузки, если нет фото
+    const imgText = document.getElementById('img_text');
+    if (imgText) imgText.style.display = enable ? 'none' : (uploadedImageBase64 ? 'none' : 'block');
+    const upZone = document.getElementById('upload_zone');
+    if (upZone) upZone.style.border = enable ? 'none' : '';
 }
 
 function handlePrint() {
@@ -421,6 +583,7 @@ async function genPDF() {
     const el = document.querySelector('.document-sheet');
     const footer = document.querySelector('.footer-btns');
     const closeBtn = document.querySelector('.close-x');
+    
     prepareForPrint(true);
     if (footer) footer.style.display = 'none';
     if (closeBtn) closeBtn.style.display = 'none';
@@ -429,10 +592,14 @@ async function genPDF() {
         const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
         const imgData = canvas.toDataURL('image/png');
         const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`TZ_${document.getElementById('tz_no').value || 'PRONTO'}.pdf`);
-    } catch (err) { alert("Ошибка: " + err); } 
-    finally { 
+    } catch (err) { 
+        alert("Ошибка: " + err); 
+    } finally { 
         if (footer) footer.style.display = 'flex'; 
         if (closeBtn) closeBtn.style.display = 'block';
         prepareForPrint(false);
@@ -440,14 +607,17 @@ async function genPDF() {
 }
 
 function deleteFromArchive(i) {
-    if(confirm("Удалить?")) {
-        const arc = getArchive(); arc.splice(i,1);
-        localStorage.setItem('pronto_archive', JSON.stringify(arc)); navigate('home');
+    if(confirm("Удалить проект из архива?")) {
+        const arc = getArchive(); 
+        arc.splice(i,1);
+        localStorage.setItem('pronto_archive', JSON.stringify(arc)); 
+        navigate('home');
     }
 }
 
 function editFromArchive(i) {
-    const d = getArchive()[i]; navigate('template');
+    const d = getArchive()[i]; 
+    navigate('template');
     setTimeout(() => {
         document.getElementById('tz_no').value = d.tz_no;
         document.getElementById('equipment_select').value = d.eq;
@@ -461,7 +631,11 @@ function editFromArchive(i) {
     }, 100);
 }
 
-function createNewTZ() { uploadedImageBase64 = null; navigate('template'); }
+function createNewTZ() { 
+    uploadedImageBase64 = null; 
+    navigate('template'); 
+}
+
 
 
 
