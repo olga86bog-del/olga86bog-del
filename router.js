@@ -534,98 +534,49 @@ function saveToArchive() {
 }
 
 // --- УМНАЯ ПОДГОТОВКА К ПЕЧАТИ ---
+// --- УМНАЯ ПОДГОТОВКА (ЗАМЕНА СЛОВ) ---
 function prepareForPrint(enable) {
     const inputs = document.querySelectorAll('input, select, textarea');
     
-    // 1. Управляем полями
     inputs.forEach(el => {
         if(enable) {
-            // Если в селекте написано "Выбор" или пусто -> скрываем текст
-            if(el.tagName === 'SELECT' && (el.value.includes('Выбор') || el.value === '')) {
-                el.style.color = 'transparent'; 
+            // ЛОГИКА ДЛЯ ВЫПАДАЮЩИХ СПИСКОВ
+            if(el.tagName === 'SELECT') {
+                // Запоминаем, что там было написано
+                if(!el.dataset.originalText) {
+                    el.dataset.originalText = el.options[el.selectedIndex].text;
+                }
+
+                // Если выбрано "Выбор..." или пусто -> меняем текст опции на "Нет"
+                // Но саму рамочку не трогаем (она останется благодаря CSS)
+                if(el.value.includes('Выбор') || el.value === '' || el.value.includes('--')) {
+                    // Визуально подменяем текст выбранной опции
+                    el.options[el.selectedIndex].text = 'Нет';
+                }
             }
             
-            // Если поле пустое -> делаем его невидимым
-            if(!el.value) el.style.opacity = '0';
+            // ЛОГИКА ДЛЯ ПУСТЫХ ПОЛЕЙ ВВОДА
+            if(el.tagName === 'INPUT' && el.value === '') {
+                // Можно написать "—" или оставить пустым, но рамка будет
+                // el.value = '—'; // Если хочешь прочерк, раскомментируй
+            }
 
-            // Убираем рамки и серый фон
-            el.style.border = 'none';
-            el.style.background = 'transparent';
-            el.style.padding = '0'; // Убираем отступы, чтобы текст подвинулся
         } else {
-            // Возвращаем всё назад
-            el.style.color = ''; 
-            el.style.opacity = ''; 
-            el.style.border = ''; 
-            el.style.background = '';
-            el.style.padding = '';
+            // ВОЗВРАЩАЕМ ВСЁ НАЗАД ПОСЛЕ ПЕЧАТИ
+            if(el.tagName === 'SELECT' && el.dataset.originalText) {
+                el.options[el.selectedIndex].text = el.dataset.originalText;
+                delete el.dataset.originalText;
+            }
         }
     });
 
-    // 2. Скрываем зону загрузки фото, если фото нет
+    // Скрываем зону "Нажмите для загрузки", если фото нет
     const imgText = document.getElementById('img_text');
     if(imgText) imgText.style.display = enable ? 'none' : (uploadedImageBase64 ? 'none' : 'block');
     
+    // Убираем пунктирную рамку вокруг фото (но оставляем место)
     const upZone = document.getElementById('upload_zone');
-    if(upZone) upZone.style.border = enable ? 'none' : '';
-}
-
-function handlePrint() {
-    prepareForPrint(true);
-    window.print();
-    setTimeout(() => prepareForPrint(false), 1000);
-}
-
-// --- ГЕНЕРАТОР PDF (МНОГОСТРАНИЧНЫЙ) ---
-async function genPDF() {
-    const el = document.querySelector('.document-sheet');
-    const footer = document.querySelector('.footer-btns');
-    const closeBtn = document.querySelector('.close-x');
-    
-    // Включаем режим чистовой печати
-    prepareForPrint(true);
-    if (footer) footer.style.display = 'none';
-    if (closeBtn) closeBtn.style.display = 'none';
-
-    try {
-        // Делаем снимок всего длинного документа
-        const canvas = await html2canvas(el, { 
-            scale: 2, 
-            useCORS: true, 
-            backgroundColor: '#ffffff' 
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-        
-        const imgWidth = 210; // А4 ширина
-        const pageHeight = 297; // А4 высота
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        // Первая страница
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // Если документ длиннее одной страницы, добавляем еще
-        while (heightLeft >= 0) {
-            position = heightLeft - imgHeight; // Сдвигаем картинку вверх
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
-
-        pdf.save(`TZ_${document.getElementById('tz_no').value || 'DOC'}.pdf`);
-
-    } catch (err) { 
-        alert("Ошибка PDF: " + err); 
-    } finally { 
-        // Возвращаем интерфейс
-        if (footer) footer.style.display = 'flex'; 
-        if (closeBtn) closeBtn.style.display = 'block';
-        prepareForPrint(false);
-    }
+    if(upZone) upZone.style.border = enable ? 'none' : '3px dashed #cbd5e1';
 }
 function deleteFromArchive(i) {
     if(confirm("Удалить проект из архива?")) {
@@ -656,6 +607,7 @@ function createNewTZ() {
     uploadedImageBase64 = null; 
     navigate('template'); 
 }
+
 
 
 
