@@ -519,7 +519,57 @@ function handleFile(input) {
         r.readAsDataURL(f);
     }
 }
+// --- БЛОК 3: ГЕНЕРАТОР PDF (ВСТАВИТЬ ПОСЛЕ handlePrint) ---
+async function genPDF() {
+    const el = document.querySelector('.document-sheet');
+    const footer = document.querySelector('.footer-btns');
+    const closeBtn = document.querySelector('.close-x');
+    
+    // 1. Включаем режим чистовой печати
+    prepareForPrint(true);
+    
+    // 2. Прячем кнопки
+    if (footer) footer.style.display = 'none';
+    if (closeBtn) closeBtn.style.display = 'none';
 
+    try {
+        // 3. Делаем снимок
+        const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+        
+        // 4. Настройка размеров (А4 с полями 10мм)
+        const imgWidth = 190; // 210 (ширина А4) - 20 (поля слева и справа)
+        const pageHeight = 297; 
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 10; // Отступ сверху 10мм
+
+        // Первая страница
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - 20); // Вычитаем высоту листа минус поля
+
+        // Если документ длинный — добавляем страницы
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight + 10; 
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position - 20, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - 20);
+        }
+
+        // 5. Сохраняем файл
+        pdf.save(`TZ_${document.getElementById('tz_no').value || 'DOC'}.pdf`);
+
+    } catch (err) { 
+        alert("Ошибка при создании PDF: " + err); 
+    } finally { 
+        // 6. Возвращаем всё назад
+        if (footer) footer.style.display = 'flex'; 
+        if (closeBtn) closeBtn.style.display = 'block';
+        prepareForPrint(false);
+    }
+}
 function saveToArchive() {
     const arc = getArchive();
     arc.unshift({ 
@@ -607,6 +657,7 @@ function createNewTZ() {
     uploadedImageBase64 = null; 
     navigate('template'); 
 }
+
 
 
 
