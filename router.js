@@ -579,30 +579,59 @@ function handlePrint() {
     setTimeout(() => prepareForPrint(false), 1000);
 }
 
+// --- НОВАЯ ФУНКЦИЯ PDF (МНОГОСТРАНИЧНАЯ) ---
 async function genPDF() {
     const el = document.querySelector('.document-sheet');
     const footer = document.querySelector('.footer-btns');
     const closeBtn = document.querySelector('.close-x');
     
+    // 1. Включаем режим "Как при печати" (убираем рамки, слово "Выбор" и т.д.)
     prepareForPrint(true);
+    
+    // Прячем кнопки, чтобы они не попали в PDF
     if (footer) footer.style.display = 'none';
     if (closeBtn) closeBtn.style.display = 'none';
 
     try {
-        const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+        // 2. Делаем снимок всей длинной страницы
+        const canvas = await html2canvas(el, { 
+            scale: 2, // Масштаб 2 (HD), чтобы не тормозило на длинных списках
+            useCORS: true, 
+            backgroundColor: '#ffffff' 
+        });
+
+        // 3. Вычисляем размеры
         const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 210; // Ширина А4 в мм
+        const pageHeight = 297; // Высота А4 в мм
+        const imgHeight = (canvas.height * imgWidth) / canvas.width; // Реальная высота твоего документа
+        let heightLeft = imgHeight; // Сколько еще осталось "напечатать"
+
         const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        let position = 0; // Отступ сверху
+
+        // 4. Добавляем первую страницу
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight; // Вычитаем высоту одного листа
+
+        // 5. Если документ длинный, добавляем следующие страницы
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight; // Сдвигаем "камеру" вниз
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        // 6. Сохраняем файл
         pdf.save(`TZ_${document.getElementById('tz_no').value || 'PRONTO'}.pdf`);
+
     } catch (err) { 
-        alert("Ошибка: " + err); 
+        alert("Ошибка создания PDF: " + err); 
     } finally { 
+        // 7. Возвращаем всё как было
         if (footer) footer.style.display = 'flex'; 
         if (closeBtn) closeBtn.style.display = 'block';
-        prepareForPrint(false);
+        prepareForPrint(false); // Выключаем режим печати
     }
 }
 
@@ -635,6 +664,7 @@ function createNewTZ() {
     uploadedImageBase64 = null; 
     navigate('template'); 
 }
+
 
 
 
