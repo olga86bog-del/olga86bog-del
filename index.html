@@ -7,210 +7,87 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        /* ЦВЕТОВАЯ СХЕМА */
-        :root {
-            --pronto: #2b6cb0; 
-            --bg-app: #f1f5f9; 
-            --text-main: #1e293b; 
-            --white: #ffffff;
-            --border: #cbd5e1; 
-            --header-bg: #e0f2fe;
-        }
-
-        /* ТЕМНАЯ ТЕМА (DARK MODE) */
-        body.dark-theme {
-            --bg-app: #0f172a; 
-            --text-main: #f1f5f9; 
-            --white: #1e293b; 
-            --border: #334155;
-            --header-bg: #1e293b;
-        }
-
+        :root { --pronto: #2b6cb0; --bg: #f1f5f9; --text: #1e293b; --white: #ffffff; --border: #cbd5e1; }
+        body.dark-theme { --bg: #0f172a; --text: #f1f5f9; --white: #1e293b; --border: #334155; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        #app { max-width: 950px; width: 96%; margin: 20px auto; min-height: 100vh; padding-bottom: 120px; }
 
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg-app); 
-            color: var(--text-main); 
-            transition: background 0.3s ease, color 0.3s ease; 
-            overflow-x: hidden; 
-        }
+        /* ЛОАДЕР */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 99999; }
+        .spinner { width: 60px; height: 60px; border: 6px solid #f3f3f3; border-top: 6px solid var(--pronto); border-radius: 50%; animation: spin 1s linear infinite; }
 
-        #app { 
-            max-width: 950px; 
-            width: 96%; 
-            margin: 20px auto; 
-            min-height: 100vh; 
-            padding-bottom: 120px; 
-        }
-
-        /* ЭКРАН ЗАГРУЗКИ */
-        #loader { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: white; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 99999; 
-            transition: opacity 0.5s ease;
-        }
-        .spinner { 
-            width: 70px; height: 70px; border: 7px solid #f3f3f3; 
-            border-top: 7px solid var(--pronto); border-radius: 50%; 
-            animation: spin 1s linear infinite; 
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* СТИЛИ ГЛАВНОЙ СТРАНИЦЫ */
-        .home-card {
-            background-color: var(--white);
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-top: 20px;
-        }
-        .main-title {
-            color: var(--pronto);
-            font-size: 50px;
-            font-weight: 900;
-            margin: 0;
-            letter-spacing: -2px;
-            line-height: 1;
-            text-transform: uppercase;
-        }
-        .subtitle {
-            color: #3b82f6;
-            font-size: 40px;
-            font-weight: 900;
-            margin-bottom: 30px;
-            line-height: 1;
-            text-transform: uppercase;
-        }
-
-        /* АРХИВ */
-        .archive-item {
-            background: var(--white);
-            border: 1px solid var(--border);
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: transform 0.2s;
-        }
-        .archive-thumb {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            background: #f1f5f9;
-            border: 1px solid var(--border);
-        }
-
-        /* ЛИСТ ТЕХНИЧЕСКОГО ЗАДАНИЯ */
-        .document-sheet { 
-            background-color: white !important; 
-            padding: 40px; 
-            border-radius: 4px; 
-            box-shadow: 0 0 40px rgba(0,0,0,0.15); 
-            position: relative; 
-            width: 100%;
-            color: black !important;
-        }
-
-        .doc-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            border-bottom: 4px solid var(--pronto); 
-            padding-bottom: 15px; 
-            margin-bottom: 25px; 
-        }
+        /* ИНТЕРФЕЙС */
+        .home-card { background: var(--white); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        .main-title { color: var(--pronto); font-size: 55px; font-weight: 900; margin: 0; line-height: 1; letter-spacing: -2px; }
+        .subtitle { color: #3b82f6; font-size: 40px; font-weight: 900; margin-bottom: 30px; line-height: 1; }
         
-        /* СЕТКА: Все в один ряд */
-        .top-info-grid { 
-            display: grid; 
-            grid-template-columns: 2.2fr 0.7fr 0.7fr; 
-            gap: 15px; 
-            margin-bottom: 25px; 
-            background: #f8fafc; 
-            padding: 20px; 
-            border-radius: 10px; 
-            border: 1px solid #e2e8f0; 
-        }
+        .archive-item { background: var(--white); border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; }
+        .archive-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; background: #eee; }
 
-        /* ТАБЛИЦА */
-        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-        .spec-table th { background: #1e293b !important; color: white !important; padding: 10px; text-align: left; }
-        .spec-table td { border: 1px solid #cbd5e1; padding: 8px 10px; vertical-align: middle; word-wrap: break-word; color: black !important; }
-        .section-title td { 
-            background: #e0f2fe !important; 
-            font-weight: 900; 
-            color: #0369a1 !important; 
-            text-transform: uppercase; 
-            font-size: 11px; 
-            letter-spacing: 1px;
-            padding-top: 15px;
-            padding-bottom: 5px;
-        }
+        /* ЛИСТ ТЗ */
+        .document-sheet { background: white !important; padding: 40px; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.1); width: 100%; color: black !important; }
+        .doc-header { display: flex; justify-content: space-between; border-bottom: 4px solid var(--pronto); padding-bottom: 20px; margin-bottom: 20px; }
+        .top-info-grid { display: grid; grid-template-columns: 2.2fr 0.8fr 0.8fr; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+        .spec-table th { background: #1e293b !important; color: white !important; padding: 12px; text-align: left; }
+        .spec-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: middle; color: black !important; }
+        .section-title td { background: #e0f2fe !important; font-weight: 900; color: #0369a1 !important; text-transform: uppercase; font-size: 12px; padding: 12px; }
 
+        /* ВВОД ДАННЫХ */
+        input, select, textarea { width: 100%; border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px; font-size: 14px; font-family: inherit; font-weight: bold; }
+        
         /* КНОПКИ */
-        .footer-btns { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: var(--white); padding: 15px; display: flex; 
-            gap: 10px; justify-content: center; z-index: 1000; 
-            border-top: 1px solid var(--border); 
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-        }
-        .btn { 
-            border: none; padding: 14px 25px; border-radius: 8px; 
-            font-weight: 700; cursor: pointer; color: white; 
-            background: var(--pronto); text-transform: uppercase; 
-            transition: 0.2s; 
-        }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-success { background: #10b981; }
-        .btn-secondary { background: #64748b; }
-        
-        .close-x { 
-            font-size: 36px; cursor: pointer; color: #cbd5e0; 
-            background: none; border: none; padding: 0 10px; 
-            line-height: 1; transition: 0.3s;
-        }
-        .close-x:hover { color: #ef4444; transform: rotate(90deg); }
+        .footer-btns { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); padding: 20px; display: flex; gap: 15px; justify-content: center; z-index: 1000; border-top: 1px solid var(--border); }
+        .btn { border: none; padding: 16px 30px; border-radius: 12px; font-weight: 800; cursor: pointer; color: white; background: var(--pronto); text-transform: uppercase; }
+        .btn-success { background: #10b981; } .btn-secondary { background: #64748b; }
+        .close-x { font-size: 40px; cursor: pointer; color: #cbd5e0; background: none; border: none; padding: 0 10px; line-height: 1; }
 
-        /* МОДАЛЬНЫЕ ОКНА */
-        .modal { 
-            position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; 
-        }
-        .modal-content { 
-            background: white; padding: 35px; border-radius: 15px; 
-            width: 400px; text-align: center; color: #1e293b; 
-        }
+        .modal { position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 450px; text-align: center; color: #1e293b; }
 
-        @media screen and (max-width: 800px) {
-            .document-sheet { padding: 20px; min-width: 850px; }
-            #app { overflow-x: auto; }
-            .footer-btns { padding: 10px; }
-            .btn { padding: 12px 15px; font-size: 12px; }
+        /* --- СТИЛИ ПЕЧАТИ (САМОЕ ВАЖНОЕ) --- */
+        @media print {
+            body * { visibility: hidden; }
+            .document-sheet, .document-sheet * { visibility: visible; }
+            .document-sheet { 
+                position: absolute; left: 0; top: 0; width: 100%; padding: 0; box-shadow: none; 
+            }
+            /* Скрываем кнопки добавления (+), рамки селектов и плейсхолдеры */
+            .admin-add-btn, .close-x, .footer-btns, .no-print { display: none !important; }
+            
+            /* Превращаем инпуты в текст */
+            input, select, textarea { 
+                border: none !important; background: transparent !important; 
+                padding: 0 !important; margin: 0 !important; appearance: none;
+                font-size: 14px !important; font-weight: bold; color: black !important;
+            }
+            /* Скрываем стрелку селекта */
+            select { -webkit-appearance: none; -moz-appearance: none; text-indent: 1px; text-overflow: ''; }
+            
+            /* Разрыв страницы после 5-го раздела (Температуры) */
+            tr.section-title:nth-of-type(6) { page-break-before: always; margin-top: 30px; display: block; }
+            
+            /* Картинка на весь лист */
+            #upload_zone { border: none !important; }
+            #img_text { display: none !important; }
+            #preview_img { max-height: 800px !important; width: 100% !important; object-fit: contain; }
         }
     </style>
 </head>
 <body>
-    <div id="loader">
-        <div class="spinner"></div>
-    </div>
+    <div id="loader"><div class="spinner"></div></div>
     <div id="app"></div>
     <script src="config.js"></script>
     <script src="router.js"></script>
 </body>
 </html>
+
 
 
 
